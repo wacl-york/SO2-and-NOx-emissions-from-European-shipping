@@ -1,3 +1,11 @@
+################################################################################
+### ACRUISE-1 data visualisation ###
+
+#Contributions from: Dominika Pasternak, Will Drysdale.
+
+################################################################################
+### Loading packages ###
+
 library(dplyr)
 library(ggmap)
 library(ggplot2)
@@ -14,37 +22,53 @@ library(viridis)
 library(waclr)
 library(data.table) 
 
+################################################################################
+### Initial setup ###
 
-
-
+#set working directory
 setwd("G:/My Drive/ACRUISE_integration2/merges")
+
+#load files
 ncdf <- "./ncdfs/core_faam_20190711_v004_r1_c180_1hz.nc"
 csv <-  "G:/My Drive/Ships_ACRUISE Campaign 2019/data/merged_data_v2.1/Merge_ ozone/c180_merge_ICL_HCHO_O3.csv"
 
+#get date
 origin <- stringr::str_sub(ncdf, start= 19, end=26) %>% gsub(".na","",.)
 origin <-  paste0(origin, " 00:00")
 
+
+
+################################################################################
+### NCDF file ###
+
+#extract variables
 data_nc <-  ncdf4::nc_open(ncdf)
 o3 <- ncvar_get(data_nc, attributes(data_nc$var)$names[125]) %>% as.vector()
 o3_flag <- ncvar_get(data_nc, attributes(data_nc$var)$names[126]) %>% as.vector()
 so2 <- ncvar_get(data_nc, attributes(data_nc$var)$names[67]) %>% as.vector()
 so2_flag <- ncvar_get(data_nc, attributes(data_nc$var)$names[68]) %>% as.vector()
 
-
+#extract and format time
 time <- ncvar_get(data_nc, attributes(data_nc$dim)$names[1]) %>% as.vector()
 date <- strptime(x = origin, format ="%Y%m%d %H:%M", tz="UTC") + (time)
-
-
 
 #put vectors together
 core <- data.frame(date, o3, o3_flag, so2, so2_flag) %>% na.omit
 
+#flags
+core$o3[core$o3_flag != 0] <-  NA
+core$so2[core$so2_flag != 0] <-  NA
 
 
-#other stuff
+### ICL, NOx and HCHO merge file ###
+
+#read
 dm1 <- read.csv(csv, stringsAsFactors = F)
+
+#format date
 dm1$date <-  as.POSIXct(dm1$date, tz="UTC")
 
+#extract variables and rename
 dm <-  subset(dm1, select=c(date, lat_gin, lon_gin, hgt_radr, v_c, u_c, w_c, cpc_cnts, cpc_cnts_flag, co_aero, co_aero_flag, co2, co2_flag, ch4, ch4_flag, no2_mr, no2_flag, no_mr, no_flag, ethane_icl, ethane_icl_flag, hcho_ppb)) %>% 
   dplyr::rename(lat = lat_gin,
          lon = lon_gin,
@@ -58,11 +82,13 @@ dm <-  subset(dm1, select=c(date, lat_gin, lon_gin, hgt_radr, v_c, u_c, w_c, cpc
          ethane = ethane_icl,
          hcho = hcho_ppb)
 
-
-dm$nox <- (dm$no + dm$no2)*0.001
+#make NOx, NOx ratio and convert NOx species to ppb
 dm$no <- dm$no*0.001
 dm$no2 <- dm$no2*0.001
+dm$nox <- (dm$no + dm$no2)
+dm$nox_rat <- dm$no2/dm$no
 
+#remove flagged data
 dm$cpc[dm$cpc_cnts_flag != 0] <- NA
 dm$co[dm$co_aero_flag != 0] <-  NA
 dm$ch4[dm$ch4_flag !=0] <-  NA
@@ -71,20 +97,18 @@ dm$ethane[dm$ethane_icl_flag !=0] <- NA
 dm$no[dm$no_flag !=0] <- NA
 dm$no2[dm$no2_flag !=0] <- NA
 dm$nox[dm$no2_flag !=0 | dm$no_flag !=0] <- NA
+dm$no2[dm$no2 <= 0] <-  NA
+dm$no[dm$no <= 0] <-  NA
 
 #put all together
 df <-  merge(dm, core)
 
-df$o3[df$o3_flag != 0] <-  NA
-df$so2[df$so2_flag != 0] <-  NA
-
-dm$no2[dm$no2 <= 0] <-  NA
-dm$no[dm$no <= 0] <-  NA
-dm$nox_rat <- dm$no2/dm$no
-
-
-# export  
+#export  
 saveRDS(df, "G:/My Drive/ACRUISE_integration2/merges/merged/c180_merge.rds")
+
+################################################################################
+
+
 
 
 ship <-  dm %>% filter(between(date, 
