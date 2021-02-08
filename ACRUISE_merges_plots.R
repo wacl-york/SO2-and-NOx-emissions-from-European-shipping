@@ -26,14 +26,14 @@ library(data.table)
 ### Initial setup ###
 
 #set working directory
-setwd("G:/My Drive/ACRUISE_integration2/merges")
+setwd("G:/My Drive/Ships_ACRUISE Campaign 2019/data")
 
 #load files
-ncdf <- "./ncdfs/core_faam_20190711_v004_r1_c180_1hz.nc"
-csv <-  "G:/My Drive/Ships_ACRUISE Campaign 2019/data/merged_data_v2.1/Merge_ ozone/c180_merge_ICL_HCHO_O3.csv"
+ncdf <- "core_faam_20190712_v004_r1_c181_1hz.nc"
+csv <-  "./merged_data_v2.1/Merge_ ozone/c181_merge_ICL_HCHO_O3.csv"
 
 #get date
-origin <- stringr::str_sub(ncdf, start= 19, end=26) %>% gsub(".na","",.)
+origin <- ncdf %>% map_chr(str_sub, start = 11, end = 18)
 origin <-  paste0(origin, " 00:00")
 
 
@@ -104,16 +104,16 @@ dm$no[dm$no <= 0] <-  NA
 df <-  merge(dm, core)
 
 #export  
-saveRDS(df, "G:/My Drive/ACRUISE_integration2/merges/merged/c180_merge.rds")
+saveRDS(ship, "G:/My Drive/ACRUISE/ACRUISE_INTEGRATION3/merged/c181_merge.rds")
 
 ################################################################################
 
 
 
 
-ship <-  dm %>% filter(between(date, 
-                               ymd_hms("2019-07-12 14:30:00"),
-                               ymd_hms("2019-07-12 15:03:00")))
+ship <-  df %>% filter(between(date, 
+                               ymd_hms("2019-07-12 10:50:00"),
+                               ymd_hms("2019-07-12 11:29:00")))
 
 
 mymap = ggmap::get_stamenmap(bbox = c(min(ship$lon-0.02),min(ship$lat-0.02),max(ship$lon+0.02),max(ship$lat+0.02)), zoom = 7)
@@ -194,7 +194,7 @@ ggmap(mymap)+
 ship1 <- ship %>% filter(nox>.2)
 ggplot(ship) +
   geom_point(aes(x = nox, y = o3, colour=so2),size=4, alpha=.9) +
-  scale_color_viridis(option="magma", ,limits=c(-1.5,2.3)) +
+  scale_color_viridis(option="magma", limits=c(-1.5,2.3)) +
   theme_bw()+
   labs(x=bquote(''~NO[x]~ (ppb)*''), y=bquote(''~O[3]~ (ppb)*''), color=bquote(''~SO[2]~ (ppb)*''))+
   theme(plot.title = element_text(hjust = 0.5), text = element_text(size=24))
