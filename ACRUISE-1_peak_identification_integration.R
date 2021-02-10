@@ -39,8 +39,8 @@ dm1 <- readRDS("c181_merge.RDS")
 # subset
 dm <- subset(dm1, select=c(date, co2, nox, so2))
 
-# remove zeros
-dm[dm<=0] <- NA 
+# remove NAs
+dm[is.na(dm)] <- 0
 
 # convert date to seconds
 dm$date <- hour(dm$date) * 3600 + minute(dm$date) * 60 + second(dm$date) - 38999 
@@ -50,9 +50,17 @@ dm$date <- hour(dm$date) * 3600 + minute(dm$date) * 60 + second(dm$date) - 38999
 ################################################################################
 ### Find peaks ###
 
-#
-findpeaks(x, nups = 3, ndowns = nups, zero = "0", peakpat = NULL, minpeakheight = -Inf, minpeakdistance = 1, threshold = 0, npeaks = 0, sortstr = FALSE)
+# find where NOx peaks are
+peaks <-  as.data.frame(findpeaks(dm$nox, nups = 1, ndowns = 1, minpeakheight = 10, minpeakdistance = 10, threshold = 0))
 
+
+ggplot()+
+  geom_point(data=dm,
+             aes(x=date, y=nox),
+             size=2)+
+  geom_point(data=peaks, 
+             aes(x=V2, y=V1),
+             colour="red")
 
 
 ################################################################################
