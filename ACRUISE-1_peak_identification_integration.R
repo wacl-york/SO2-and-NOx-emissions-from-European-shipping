@@ -1,7 +1,7 @@
 ################################################################################
 ### ACRUISE-1 peak identification and integration ###
 
-#Contributions from: Dominika Pasternak.
+#Contributions from: Will Drysdale, Dominika Pasternak.
 
 ################################################################################
 ### Loading packages ###
@@ -22,6 +22,8 @@ library(lubridate)
 library(viridis)
 library(waclr)
 library(data.table)
+library(here)
+library(openair)
 
 library(pracma)
 
@@ -37,30 +39,48 @@ setwd("G:/My Drive/ACRUISE/ACRUISE_INTEGRATION3/merged")
 dm1 <- readRDS("c181_merge.RDS")
 
 # subset
-dm <- subset(dm1, select=c(date, co2, nox, so2))
+dat_raw <- subset(dm1, select=c(date, nox, so2)) %>%
+           timeAverage("5 sec")
 
 # remove NAs
-dm[is.na(dm)] <- 0
-
-# convert date to seconds
-dm$date <- hour(dm$date) * 3600 + minute(dm$date) * 60 + second(dm$date) - 38999 
+#dm[is.na(dm)] <- 0
 
 
 
 ################################################################################
-### Find peaks ###
+### Find some peaks with Will's help ###
 
-# find where NOx peaks are
-peaks <-  as.data.frame(findpeaks(dm$nox, nups = 1, ndowns = 1, minpeakheight = 10, minpeakdistance = 10, threshold = 0))
+detect_some_peaks = function(dat,col,thresh = 0.03){
+  
+  col = enquo(col)
+  
+  dat %>% 
+    tibble() %>% 
+    mutate(
+      norm = scales::rescale(!!col),
+      rate = (!!col-lag(!!col))/lag(!!col),
+      rate = case_when(is.infinite(rate) ~ NA_real_,
+                       rate == -1 ~ NA_real_,
+                       TRUE~rate),
+      rate_norm = scales::rescale(rate),
+      weight_rate_norm = rate_norm*norm,
+      thresh = sqrt(weight_rate_norm) >= thresh
+    )
+}
 
 
-ggplot()+
-  geom_point(data=dm,
-             aes(x=date, y=nox),
-             size=2)+
-  geom_point(data=peaks, 
-             aes(x=V2, y=V1),
-             colour="red")
+detect_some_peaks(dat_raw,nox,thresh = 0.03) %>% 
+  ggplot()+
+  geom_point(aes(date,nox, colour = thresh))
+
+
+detect_some_peaks(dat_raw,so2,thresh = 0.15) %>% # change the theshold value to change sensitivity 
+  ggplot()+
+  geom_point(aes(date,so2, colour = thresh))
+
+
+
+################################################################################
 
 
 ################################################################################
@@ -89,6 +109,34 @@ ggplot()+
 
 
 
+
+################################################################################
+### JUNK ###
+
+### Find peaks ###
+
+# find where peaks are
+peaks <-  as.data.frame(findpeaks(dm$nox, 
+                                  nups = 1, 
+                                  ndowns = 1, 
+                                  minpeakheight = 10, 
+                                  minpeakdistance = 10, 
+                                  threshold = 10)) %>%
+  dplyr::rename(height = V1,
+                date = V2,
+                start = V3,
+                end = V4)
+
+
+
+ggplot()+
+  geom_point(data=dm,
+             aes(x=date, y=nox),
+             size=2)+
+  geom_point(data=peaks, 
+             aes(x=date, y=height),
+             colour="red") +
+  theme_bw()
 
 
 
