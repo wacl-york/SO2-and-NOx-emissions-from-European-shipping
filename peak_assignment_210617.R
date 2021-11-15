@@ -6,11 +6,12 @@ library(lubridate)
 library(tidyr)
 library(dygraphs)
 library(zoo)
+library(purrr)
 
 assignPlumes = function(df,
                         peakPeaks = NULL,
-                        forwards = 60,
-                        backwards = 30,
+                        forwards = 35,
+                        backwards = 20,
                         background_duration = 15){
   
   if(is.null(peakPeaks)){
@@ -127,13 +128,13 @@ validatePlume = function(peak){
 }
 
 
-dat_raw = read.csv(here("C181_example_of_data.csv")) %>% 
+dat_raw = read.csv("G:/My Drive/ACRUISE/merged/C181_merge.csv") %>% 
   select(-X) %>% 
   mutate(date = ymd_hms(date)) %>% 
   tibble() %>% 
   mutate(nox_smooth = na.approx(nox,na.rm = F))
 
-peak_meta = read.csv(here("integrations_ACRUISE1_C179_C190_no_ships.csv")) %>% 
+peak_meta = read.csv("G:/My Drive/ACRUISE/ACRUISE_integration/integration/integrations_ACRUISE1_C179_C190_no_ships.csv") %>% 
   mutate(date = dmy_hms(paste0(Date,Timestamp,sep = " "))) %>% 
   select(-Date,-Timestamp) %>% 
   tibble()
@@ -143,9 +144,10 @@ peakDat = peak_meta %>%
   select(date,Peak) %>% 
   left_join(dat_raw,.,"date") %>% 
   assignPlumes(forwards = 60) %>% 
-  mutate(so2 = list(calcPlumeStats(data)),
-         co2 = list(calcPlumeStats(data, species = "co2")),
-         nox = list(calcPlumeStats(data, species = "nox"))) %>% 
+  mutate(so2 = list(calcPlumeStats(data, species = "so2")) #,
+#        co2 = list(calcPlumeStats(data, species = "co2")),
+#        nox = list(calcPlumeStats(data, species = "nox"))
+          ) %>% 
   pivot_longer(-c(Peak,data),
                names_to = "species",
                values_to = "stats") %>% 

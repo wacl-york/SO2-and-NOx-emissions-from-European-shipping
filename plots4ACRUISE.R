@@ -77,7 +77,7 @@ data_merge$date[data_merge$so2_teco > 10 & lubridate::hour(dm$date) >= 14] %>%
 
 #############################  INTERACTIVE PLOTS #################################
 
-data_merge_xts = xts::xts(FGGA[,c("CH4_ppb")],order.by = FGGA$date)
+data_merge_xts = xts::xts(dat_raw[,c("so2")],order.by = dat_raw$date)
 
 #timezone important, defaults to false
 dygraphs::dygraph(data_merge_xts) %>% 
