@@ -26,14 +26,20 @@ library(data.table)
 ### Initial setup ###
 
 #set working directory
-setwd("G:/My Drive/Ships_ACRUISE Campaign 2019/data")
+setwd("G:/My Drive/ACRUISE/ACRUISE2/data_raw")
+
+#flight number
+fn <-  c("c256")
+
+#find and load files
+core_1_files <-  list.files("./core_1hz",pattern = ".nc") # core 1 Hz data
 
 #load files
-ncdf <- "core_faam_20190712_v004_r1_c181_1hz.nc"
-csv <-  "./merged_data_v2.1/Merge_ ozone/c181_merge_ICL_HCHO_O3.csv"
+ncdf <- paste0("./core_1hz/",core_1_files[grep(fn,core_1_files,ignore.case=TRUE)])
+#csv <-  "./merged_data_v2.1/Merge_ ozone/c181_merge_ICL_HCHO_O3.csv"
 
 #get date
-origin <- ncdf %>% map_chr(str_sub, start = 11, end = 18)
+origin <- ncdf %>% map_chr(str_sub, start = -28, end = -21)
 origin <-  paste0(origin, " 00:00")
 
 
@@ -41,25 +47,51 @@ origin <-  paste0(origin, " 00:00")
 ################################################################################
 ### NCDF file ###
 
-#extract variables
+#open the ncdf
 data_nc <-  ncdf4::nc_open(ncdf)
-o3 <- ncvar_get(data_nc, attributes(data_nc$var)$names[125]) %>% as.vector()
-o3_flag <- ncvar_get(data_nc, attributes(data_nc$var)$names[126]) %>% as.vector()
-so2 <- ncvar_get(data_nc, attributes(data_nc$var)$names[67]) %>% as.vector()
-so2_flag <- ncvar_get(data_nc, attributes(data_nc$var)$names[68]) %>% as.vector()
 
-#extract and format time
-time <- ncvar_get(data_nc, attributes(data_nc$dim)$names[1]) %>% as.vector()
-date <- strptime(x = origin, format ="%Y%m%d %H:%M", tz="UTC") + (time)
+#choose variables
+vars_nc <- c("U_C", "V_C", "W_C", "LAT_GIN", "LON_GIN","HGT_RADR", "CPC_CNTS", "CPC_CNTS_FLAG", "WOW_IND")
 
-#put vectors together
-core <- data.frame(date, o3, o3_flag, so2, so2_flag) %>% na.omit
+#turn NetCDF into data frame
+for (i in 1:length(vars_nc)) {
+  vname <- vars_nc[i]
+  raw <- as.vector(ncdf4::ncvar_get(data_nc,vname,collapse_degen=FALSE))
+  if(i==1){
+    CORE_1Hz <- data.frame(raw)
+    names(CORE_1Hz) <- vname
+  } 
+  else {
+    CORE_1Hz <- cbind(CORE_1Hz,raw)
+    names(CORE_1Hz)[ncol(CORE_1Hz)] <- vname
+  }
+}
 
-#flags
-core$o3[core$o3_flag != 0] <-  NA
-core$so2[core$so2_flag != 0] <-  NA
+#get time and adjust frequency 
+core_time <- ncvar_get(data_nc, attributes(data_nc$dim)$names[1]) %>% as.vector()
+date <- strptime(x = origin, format ="%Y%m%d %H:%M") + (core_time)
+CORE_1Hz$date <- base::as.POSIXct(seq.POSIXt(from = min(date)+(1),
+                                              to = max(date)+1, 
+                                              by = 1,
+                                              tz = "UTC"))
+
+#tidy up
+rm(date, core_time, i, raw, vname, vars_nc)
+
+#flags core
+#CORE_1Hz$o3[CORE_1Hz$o3_flag != 0] <-  NA
+#CORE_1Hz$so2[CORE_1Hz$so2_flag != 0] <-  NA
+CORE_1Hz$CPC_CNTS[CORE_1Hz$CPC_CNTS_FLAG != 0] <- NA
+#CORE_1Hz$co[CORE_1Hz$co_aero_flag != 0] <-  NA
+
+#trim to flight only by weight on wheels
+CORE_1Hz <- CORE_1Hz[!CORE_1Hz$WOW_IND != 0,]
+
+#save prelim
+saveRDS(CORE_1Hz, paste0("./core_for_stats/",fn,"_core_basic.RDS"))
 
 
+################################################################################
 ### ICL, NOx and HCHO merge file ###
 
 #read
@@ -71,16 +103,20 @@ dm1$date <-  as.POSIXct(dm1$date, tz="UTC")
 #extract variables and rename
 dm <-  subset(dm1, select=c(date, lat_gin, lon_gin, hgt_radr, v_c, u_c, w_c, cpc_cnts, cpc_cnts_flag, co_aero, co_aero_flag, co2, co2_flag, ch4, ch4_flag, no2_mr, no2_flag, no_mr, no_flag, ethane_icl, ethane_icl_flag, hcho_ppb)) %>% 
   dplyr::rename(lat = lat_gin,
-         lon = lon_gin,
-         v = v_c,
-         u = u_c,
-         w = w_c,
-         cpc = cpc_cnts,
-         co = co_aero,
-         no2 = no2_mr,
-         no = no_mr,
-         ethane = ethane_icl,
-         hcho = hcho_ppb)
+                lon = lon_gin,
+                v = v_c,
+                u = u_c,
+                w = w_c,
+                cpc = cpc_cnts,
+                co = co_aero,
+                no2 = no2_mr,
+                no = no_mr,
+                ethane = ethane_icl,
+                hcho = hcho_ppb)
+
+
+
+### flagging and converting the data ###
 
 #make NOx, NOx ratio and convert NOx species to ppb
 dm$no <- dm$no*0.001
@@ -88,9 +124,7 @@ dm$no2 <- dm$no2*0.001
 dm$nox <- (dm$no + dm$no2)
 dm$nox_rat <- dm$no2/dm$no
 
-#remove flagged data
-dm$cpc[dm$cpc_cnts_flag != 0] <- NA
-dm$co[dm$co_aero_flag != 0] <-  NA
+#flags other
 dm$ch4[dm$ch4_flag !=0] <-  NA
 dm$co2[dm$co2_flag !=0] <- NA
 dm$ethane[dm$ethane_icl_flag !=0] <- NA
@@ -100,11 +134,16 @@ dm$nox[dm$no2_flag !=0 | dm$no_flag !=0] <- NA
 dm$no2[dm$no2 <= 0] <-  NA
 dm$no[dm$no <= 0] <-  NA
 
+
+
+################################################################################
+### merge & save ###
+
 #put all together
-df <-  merge(dm, core)
+df <-  merge(dm, CORE_1Hz)
 
 #export  
-saveRDS(ship, "G:/My Drive/ACRUISE/ACRUISE_INTEGRATION3/merged/c181_merge.rds")
+saveRDS(df, paste0("./full_merge/",fn,"_all_data_r0.RDS"))
 
 ################################################################################
 
@@ -116,7 +155,7 @@ ship <-  df %>% filter(between(date,
                                ymd_hms("2019-07-12 11:29:00")))
 
 
-mymap = ggmap::get_stamenmap(bbox = c(min(ship$lon-0.02),min(ship$lat-0.02),max(ship$lon+0.02),max(ship$lat+0.02)), zoom = 7)
+
 
 #map - comparison
 map_o3 <- ggmap(mymap)+

@@ -21,7 +21,7 @@ ggplot(dm, aes(Gross.tonnage/1000))+
     scale_x_binned(n.breaks = 9)+
     labs(x="Gross tonnage (thousands)", y="Ship count", title = "ACRUISE-2 ship size distribution")+
     theme_minimal() +
-    theme(plot.title = element_text(hjust = 0.5),  text = element_text(size=14))
+    theme(plot.title = element_text(hjust = 0.5, colour = "white"),  text = element_text(size=14, colour="white"), axis.text = element_text(colour = "white"))
 
 
 #year built
@@ -30,7 +30,7 @@ ggplot(dm, aes(Year))+
   scale_x_binned(n.breaks = 8)+
   labs(x="Year built", y="Ship count", title = "ACRUISE-2 ship age distribution")+
   theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5),  text = element_text(size=14))
+  theme(plot.title = element_text(hjust = 0.5, colour = "white"),  text = element_text(size=14, colour="white"), axis.text = element_text(colour = "white"))
 
 
 #column charts
@@ -45,5 +45,5 @@ ggplot(st, aes(x=n,y=Type))+
   #scale_x_binned(n.breaks = 8)+
   labs(x="Ship count", y="", title = "ACRUISE-2 ship type distribution")+
   theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5),  text = element_text(size=14))
+  theme(plot.title = element_text(hjust = 0.5, colour = "white"),  text = element_text(size=16, colour="white"), axis.text = element_text(colour = "white"))
 
