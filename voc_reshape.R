@@ -2,6 +2,7 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 library(ggplot2)
+library(viridis)
 
 
 # Read --------------------------------------------------------------------
@@ -39,18 +40,110 @@ voc_long %>%
   filter(!is.na(Ship)) %>% 
   ggplot()+
   geom_bar(aes(case_bottle, value, fill = name), position = "stack", stat = "identity")+
-  facet_wrap(~Ship, scales = "free_x")
+  scale_fill_viridis(discrete=TRUE) +
+  facet_wrap(~Ship, scales = "free_x")+
+  labs(x="SWAS case / bottle", y="Percentage")+
+  theme_minimal() +
+  theme(plot.title = element_blank(),  text = element_text(size=14, colour="black"), axis.text = element_text(colour = "black"))
 
 voc_long %>% 
-  filter(Ship %in% c("MSC Branka", "MSC La Spezia")) %>% 
+  filter(Ship %in% c("background")) %>% 
   ggplot()+
   geom_bar(aes(case_bottle, value, fill = name), position = "stack", stat = "identity")+
-  facet_wrap(~Ship, scales = "free_x")
+  geom_text(aes(case_bottle, value, label=flight, group=case_bottle))+
+  scale_fill_viridis(discrete=TRUE) +
+  facet_wrap(~Ship, scales = "free_x")+
+  labs(x="SWAS case / bottle", y="Percentage")+
+  theme_minimal() +
+  theme(plot.title = element_blank(),  text = element_text(size=14, colour="black"), axis.text = element_text(colour = "black"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+plot_lables = voc_long %>% 
+  filter(Ship %in% "background") %>% 
+  select(case_bottle, flight) %>% 
+  mutate(y = 4) %>% 
+  distinct()
+
+voc_long %>% 
+  filter(Ship %in% c("background")) %>% 
+  ggplot()+
+  geom_bar(aes(case_bottle, value, fill = name), position = "stack", stat = "identity")+
+  geom_text(data = plot_lables,
+            aes(case_bottle, y, label=flight))+
+  scale_fill_viridis(discrete=TRUE) +
+  facet_wrap(~Ship, scales = "free_x")+
+  labs(x="SWAS case / bottle", y="Percentage")+
+  theme_minimal() +
+  theme(plot.title = element_blank(),  text = element_text(size=14, colour="black"), axis.text = element_text(colour = "black"))
+
+
+voc_long %>% 
+  filter(Ship %in% c("background")) %>% 
+  ggplot()+
+  geom_bar(aes(case_bottle, value, fill = name), position = "stack", stat = "identity")+
+  # geom_text(data = plot_lables,
+  #           aes(case_bottle, y, label=flight))+
+  scale_fill_viridis(discrete=TRUE) +
+  facet_wrap(~flight, scales = "free_x")+
+  labs(x="SWAS case / bottle", y="Percentage")+
+  theme_minimal() +
+  theme(plot.title = element_blank(),  text = element_text(size=14, colour="black"), axis.text = element_text(colour = "black"))
+
+
+
+
+#ordered
+plot_data = voc_long %>% 
+  filter(Ship == "background") %>% 
+  nest_by(case_bottle) %>% 
+  mutate(s = sum(data$value, na.rm = T),
+         case_bottle = as.character(case_bottle)) %>% 
+  arrange(desc(s)) %>% 
+  mutate(case_bottle = factor(case_bottle, unique(case_bottle))) %>%
+  unnest(data)
+
+plot_lables = plot_data %>% 
+  select(case_bottle, flight) %>% 
+  distinct()
+
+plot_data %>% 
+  ggplot()+
+  geom_bar(aes(case_bottle, value, fill = name), position = "stack", stat = "identity")+
+  geom_text(data = plot_lables,
+            aes(case_bottle, -0.1, label = flight))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Notes on widening again -------------------------------------------------
 
 voc_long %>% 
-   %>% 
   pivot_wider(names_from = "name",
               values_from = c(value,uncertainty,flag),
               names_glue = "{name}__{.value}") %>% 
