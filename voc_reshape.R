@@ -50,7 +50,6 @@ voc_long %>%
   filter(Ship %in% c("background")) %>% 
   ggplot()+
   geom_bar(aes(case_bottle, value, fill = name), position = "stack", stat = "identity")+
-  geom_text(aes(case_bottle, value, label=flight, group=case_bottle))+
   scale_fill_viridis(discrete=TRUE) +
   facet_wrap(~Ship, scales = "free_x")+
   labs(x="SWAS case / bottle", y="Percentage")+
@@ -69,11 +68,11 @@ voc_long %>%
 
 
 
-
+#all by bottle
 plot_lables = voc_long %>% 
   filter(Ship %in% "background") %>% 
   select(case_bottle, flight) %>% 
-  mutate(y = 4) %>% 
+  mutate(y = -0.1) %>% 
   distinct()
 
 voc_long %>% 
@@ -89,6 +88,7 @@ voc_long %>%
   theme(plot.title = element_blank(),  text = element_text(size=14, colour="black"), axis.text = element_text(colour = "black"))
 
 
+#all divided into flights
 voc_long %>% 
   filter(Ship %in% c("background")) %>% 
   ggplot()+
@@ -101,10 +101,7 @@ voc_long %>%
   theme_minimal() +
   theme(plot.title = element_blank(),  text = element_text(size=14, colour="black"), axis.text = element_text(colour = "black"))
 
-
-
-
-#ordered
+#all ordered
 plot_data = voc_long %>% 
   filter(Ship == "background") %>% 
   nest_by(case_bottle) %>% 
