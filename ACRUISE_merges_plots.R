@@ -1,7 +1,7 @@
 ################################################################################
 ### ACRUISE-1 data visualisation ###
 
-#Contributions from: Dominika Pasternak, Will Drysdale.
+#Contributions from: Dominika Pasternak, Will Drysdale, Adam Vaughan.
 
 ################################################################################
 ### Loading packages ###
@@ -29,7 +29,7 @@ library(data.table)
 setwd("G:/My Drive/ACRUISE/ACRUISE2/data_raw")
 
 #flight number
-fn <-  c("c256")
+fn <-  c("c249")
 
 #find and load files
 core_1_files <-  list.files("./core_1hz",pattern = ".nc") # core 1 Hz data
@@ -51,7 +51,7 @@ origin <-  paste0(origin, " 00:00")
 data_nc <-  ncdf4::nc_open(ncdf)
 
 #choose variables
-vars_nc <- c("U_C", "V_C", "W_C", "LAT_GIN", "LON_GIN","HGT_RADR", "CPC_CNTS", "CPC_CNTS_FLAG", "WOW_IND")
+vars_nc <- c("U_C", "V_C", "W_C", "LAT_GIN", "LON_GIN","HGT_RADR", "WOW_IND")
 
 #turn NetCDF into data frame
 for (i in 1:length(vars_nc)) {

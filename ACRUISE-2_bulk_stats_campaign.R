@@ -97,15 +97,53 @@ swas <- dplyr::distinct(swas)
 latlon <- dplyr::select(dm, c(date,LAT_GIN, LON_GIN))
 
 #round seconds and marry up time zones
-swas$date <- round.POSIXt(swas$start, units = "secs") %>% as.POSIXct(tz="UTC")
+swas$date <- round.POSIXt(swas$Start, units = "secs") %>% as.POSIXct(tz="UTC")
 latlon$date <- round.POSIXt(latlon$date, units = "secs") %>% as.POSIXct(tz="UTC")
 
 #marry swas and lat lon 
-swas <-  merge(swas, latlon, by="date")
+swas2 <-  merge(swas, latlon, by="date", all.x=T) 
 
 #save
 saveRDS(swas, "./swas_all_logs_r0.RDS")
 write.csv(swas, "./swas_all_logs_r0.csv")
+
+
+
+
+
+
+
+
+############################################################################
+### SWAS + LATLON DRAMA ###
+
+#read swas csv & remove NAs so merge doesn't freak out
+swas <- read.csv("G:/My Drive/ACRUISE/ACRUISE2/ACRUISE_latlon.csv") %>% na.omit()
+swas$Start <- dmy_hms(swas$Start)
+swas$End <- dmy_hms(swas$End)
+
+#read bulk core merge
+dm <- readRDS("G:/My Drive/ACRUISE/ACRUISE2/data_raw/core_for_stats/ACRUISE-2_merged_r0.RDS")
+
+#extract coordinates data
+latlon <- data.frame(dm$date, dm$LAT_GIN, dm$LON_GIN) %>% rename(lat=dm.LAT_GIN,lon=dm.LON_GIN, date=dm.date)
+
+#round seconds and marry up time zones
+swas$date <- round.POSIXt(swas$Start, units = "secs") %>% as.POSIXct(tz="UTC")
+latlon$date <- round.POSIXt(latlon$date, units = "secs") %>% as.POSIXct(tz="UTC")
+
+#marry swas and lat lon 
+swas2 <-  merge(swas, latlon, by="date", all.x=T) %>% rename(lat_start=lat,lon_start=lon) %>% select(-c(date))
+
+#save the bitch
+write.csv(swas2, "G:/My Drive/ACRUISE/ACRUISE2/ACRUISE_latlon_done.csv")
+
+
+
+
+
+
+
 
 
 ############################################################################
