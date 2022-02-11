@@ -8,6 +8,7 @@ library(tidyverse)
 library(lubridate) 
 library(viridis)
 library(data.table)
+library(openair)
 
 #############################################################################
 ### Merge ###
@@ -110,7 +111,53 @@ write.csv(swas, "./swas_all_logs_r0.csv")
 
 
 
+#############################################################################
+### Format FGGA ###
 
+#set working directory
+setwd("G:/My Drive/ACRUISE/ACRUISE2/data_raw/fgga_prelim")
+
+#list all swas logs
+fgga_list <- list.files("./", pattern = "FGGA")
+
+#merge all files 
+for (file in fgga_list){
+  # if the merged dataset doesn't exist, create it
+  if (!exists("fgga")){
+    fgga <- read.table(file, 
+                     header = T,
+                     sep=",",
+                     stringsAsFactors = F)
+  }
+  # if the merged dataset does exist, append to it
+  if (exists("fgga")){
+    temp_dataset <-read.table(file, 
+                            header = T, 
+                            sep=",",
+                            stringsAsFactors = F)
+    fgga<-rbind(fgga, temp_dataset)
+    rm(temp_dataset)
+  }
+}
+
+#format fgga data
+fgga <- fgga %>%
+  dplyr::mutate(UTC_time=as.POSIXct(strptime(UTC_time, "%d/%m/%Y %H:%M:%OS", tz="UTC"))) %>%
+  dplyr::rename(date=UTC_time)
+
+#tidy up
+rm(file, fgga_list)
+
+#round seconds and marry up time zones
+fgga <- openair::timeAverage(fgga, avg.time="sec")
+dm$date <- round.POSIXt(dm$date, units = "secs") %>% as.POSIXct(tz="UTC")
+
+#marry fgga and lat lon 
+fgga2 <-  merge(dm, fgga, by="date", all.x=T) 
+
+#save
+saveRDS(fgga, "./fgga_all_logs_r0.RDS")
+write.csv(fgga, "./fgga_all_logs_r0.csv")
 
 
 

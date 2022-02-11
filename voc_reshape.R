@@ -7,6 +7,7 @@ library(viridis)
 
 # Read --------------------------------------------------------------------
 
+setwd("G:/My Drive/ACRUISE/ACRUISE2/GC")
 voc = read.csv("ACRUISE-2_gc_ships_r0.csv") %>% 
   tibble()
 
@@ -29,42 +30,65 @@ voc_long = voc %>%
          case_bottle = interaction(case,bottle)) # remove whitespace frome Ship names
 
 
+
+
+
+
+
+
+
+
+
+
+
 # plot --------------------------------------------------------------------
 
-voc_long %>% 
-  ggplot()+
-  geom_bar(aes(case_bottle, value, fill = name), position = "stack", stat = "identity")+
-  facet_wrap(~Ship, scales = "free_x")
 
+#all ships by ship (no background)
 voc_long %>% 
-  filter(!is.na(Ship)) %>% 
+  filter(!is.na(Ship), !Ship=="background") %>% 
+  ggplot()+
+  geom_bar(aes(case_bottle, value, fill = name), position = "fill", stat = "identity", width=0.2)+
+  scale_fill_viridis(discrete=TRUE) +
+  facet_wrap(~Ship, scales = "free_x", ncol=10)+
+  labs(x="SWAS case / bottle", y="VOC content")+
+  theme_minimal() +
+  theme(plot.title = element_blank(),  
+        text = element_text(size=14, colour="white"),
+        #axis.text = element_text(colour="black"),
+        axis.text = element_blank(),
+        legend.title = element_blank(),
+        strip.text = element_text(colour = 'white'),
+        panel.spacing.x = unit(0,"line"),
+        panel.border = element_rect(color = "grey", fill = NA, size = 1), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())
+
+
+#all ships better
+
+
+
+#specific ship/flight etc
+voc_long %>% 
+  filter(flight %in% c("C256")) %>% 
+  filter(Ship %in% c("Anthem of the Seas", "background")) %>% 
   ggplot()+
   geom_bar(aes(case_bottle, value, fill = name), position = "stack", stat = "identity")+
   scale_fill_viridis(discrete=TRUE) +
-  facet_wrap(~Ship, scales = "free_x")+
-  labs(x="SWAS case / bottle", y="Percentage")+
+  facet_grid(~Ship, scales = "free_x", space='free')+
+  labs(x="SWAS case / bottle", y="VOC content (ppb)")+
   theme_minimal() +
-  theme(plot.title = element_blank(),  text = element_text(size=14, colour="black"), axis.text = element_text(colour = "black"))
-
-voc_long %>% 
-  filter(Ship %in% c("background")) %>% 
-  ggplot()+
-  geom_bar(aes(case_bottle, value, fill = name), position = "stack", stat = "identity")+
-  scale_fill_viridis(discrete=TRUE) +
-  facet_wrap(~Ship, scales = "free_x")+
-  labs(x="SWAS case / bottle", y="Percentage")+
-  theme_minimal() +
-  theme(plot.title = element_blank(),  text = element_text(size=14, colour="black"), axis.text = element_text(colour = "black"))
-
-
-
-
-
-
-
-
-
-
+  theme(plot.title = element_blank(),  
+        text = element_text(size=14, colour="white"),
+        axis.text = element_text(colour="white"),
+        axis.text.x = element_blank(),
+        legend.title = element_blank(),
+        strip.text = element_text(colour = 'white'),
+        panel.spacing.x = unit(0,"line"),
+        panel.border = element_rect(color = "grey", fill = NA, size = 1), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())
 
 
 
@@ -76,13 +100,13 @@ plot_lables = voc_long %>%
   distinct()
 
 voc_long %>% 
-  filter(Ship %in% c("background")) %>% 
+  filter(flight %in% c("background")) %>% 
   ggplot()+
   geom_bar(aes(case_bottle, value, fill = name), position = "stack", stat = "identity")+
   geom_text(data = plot_lables,
             aes(case_bottle, y, label=flight))+
   scale_fill_viridis(discrete=TRUE) +
-  facet_wrap(~Ship, scales = "free_x")+
+  #facet_wrap(~Ship, scales = "free_x")+
   labs(x="SWAS case / bottle", y="Percentage")+
   theme_minimal() +
   theme(plot.title = element_blank(),  text = element_text(size=14, colour="black"), axis.text = element_text(colour = "black"))
@@ -90,16 +114,26 @@ voc_long %>%
 
 #all divided into flights
 voc_long %>% 
-  filter(Ship %in% c("background")) %>% 
+  filter(Ship %in% c("background"))  %>% 
   ggplot()+
   geom_bar(aes(case_bottle, value, fill = name), position = "stack", stat = "identity")+
   # geom_text(data = plot_lables,
   #           aes(case_bottle, y, label=flight))+
   scale_fill_viridis(discrete=TRUE) +
-  facet_wrap(~flight, scales = "free_x")+
-  labs(x="SWAS case / bottle", y="Percentage")+
+  facet_grid(~flight, scales = "free_x", space='free')+
+  labs(x="SWAS case / bottle", y="VOC content (ppb)")+
   theme_minimal() +
-  theme(plot.title = element_blank(),  text = element_text(size=14, colour="black"), axis.text = element_text(colour = "black"))
+  theme(plot.title = element_blank(),  
+        text = element_text(size=14, colour="white"),
+        axis.text = element_text(colour="white"),
+        axis.text.x = element_blank(),
+        legend.title = element_blank(),
+        strip.text = element_text(colour = 'white'),
+        panel.spacing.x = unit(0,"line"),
+        panel.border = element_rect(color = "grey", fill = NA, size = 1), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())
+
 
 #all ordered
 plot_data = voc_long %>% 
