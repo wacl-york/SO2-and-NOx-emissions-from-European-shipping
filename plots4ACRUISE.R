@@ -77,7 +77,7 @@ data_merge$date[data_merge$so2_teco > 10 & lubridate::hour(dm$date) >= 14] %>%
 
 #############################  INTERACTIVE PLOTS #################################
 
-data_merge_xts = xts::xts(dm[,c("CPC_CNTS")],order.by = dm$date)
+data_merge_xts = xts::xts(file1[,c("CO2_ppm")],order.by = file1$Time)
 
 #timezone important, defaults to false
 dygraphs::dygraph(data_merge_xts) %>% 
