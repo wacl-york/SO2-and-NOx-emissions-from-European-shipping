@@ -30,7 +30,7 @@ for (file in flight_list){
   if (exists("flights")){
     temp_dataset <-readRDS(file)
     temp_dataset$flight <- file %>% map_chr(str_sub, start = 2, end = 4)
-    flights<-merge(flights, temp_dataset, all=T)
+    flights<-rbind(flights, temp_dataset)
     rm(temp_dataset)
   }
 }
@@ -112,7 +112,7 @@ write.csv(swas, "./swas_all_logs_r0.csv")
 
 
 #############################################################################
-### Format FGGA ###
+### FGGA and SO2 prelim data ###
 
 #set working directory
 setwd("G:/My Drive/ACRUISE/ACRUISE2/data_raw/fgga_prelim")
@@ -154,10 +154,58 @@ dm$date <- round.POSIXt(dm$date, units = "secs") %>% as.POSIXct(tz="UTC")
 
 #marry fgga and lat lon 
 fgga2 <-  merge(dm, fgga, by="date", all.x=T) 
+fgga2 <- left_join(dm,fgga,by="date")
+
+
+### SO2 ###
+
+#set working directory
+setwd("G:/My Drive/ACRUISE/ACRUISE2/data_raw/so2_prelim")
+
+#list all swas logs
+so2_list <- list.files("./", pattern = "SO2")
+
+#merge all files 
+for (file in so2_list){
+  # if the merged dataset doesn't exist, create it
+  if (!exists("so2")){
+    so2 <- read.table(file, 
+                       header = T,
+                       sep=",",
+                       stringsAsFactors = F)
+  }
+  # if the merged dataset does exist, append to it
+  if (exists("so2")){
+    temp_dataset <-read.table(file, 
+                              header = T, 
+                              sep=",",
+                              stringsAsFactors = F)
+    so2<-rbind(so2, temp_dataset)
+    rm(temp_dataset)
+  }
+}
+
+#format so2 data
+so2 <- so2 %>%
+  dplyr::mutate(UTC_time=as.POSIXct(strptime(UTC_time, "%d/%m/%Y %H:%M:%S", tz="UTC"))) %>%
+  dplyr::rename(date=UTC_time)
+
+#tidy up
+rm(file, so2_list)
+
+#round seconds and marry up time zones
+so2$date <- round.POSIXt(so2$date, units = "secs") %>% as.POSIXct(tz="UTC")
+fgga2$date <- round.POSIXt(fgga2$date, units = "secs") %>% as.POSIXct(tz="UTC")
+
+#marry so2 and lat lon 
+corechem <-  merge(fgga2, so2, by="date", all=T) 
+
+corechem2 <- corechem[!(corechem$flight==249),]
+
 
 #save
-saveRDS(fgga, "./fgga_all_logs_r0.RDS")
-write.csv(fgga, "./fgga_all_logs_r0.csv")
+saveRDS(corechem2, "./corechem_prelim.RDS")
+write.csv(corechem2, "./corechem_prelim.csv")
 
 
 
