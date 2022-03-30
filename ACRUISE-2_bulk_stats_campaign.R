@@ -228,7 +228,7 @@ swas$date <- round.POSIXt(swas$Start, units = "secs") %>% as.POSIXct(tz="UTC")
 latlon$date <- round.POSIXt(latlon$date, units = "secs") %>% as.POSIXct(tz="UTC")
 
 #marry swas and lat lon 
-swas2 <-  merge(swas, latlon, by="date", all.x=T) %>% rename(lat_start=lat,lon_start=lon) %>% select(-c(date))
+swas2 <-  merge(swas, latlon, by="date", all.x=T) %>% rename(lat_start=lat,lon_start=lon) %>% select(-c(date)) %>% na.omit()
 
 #save the bitch
 write.csv(swas2, "G:/My Drive/ACRUISE/ACRUISE2/ACRUISE_latlon_done.csv")

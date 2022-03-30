@@ -2,22 +2,34 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 library(ggplot2)
+library(ggrepel)
+library(ggmap)
 library(viridis)
+library(shonarrr)
+
+
 
 
 # Read --------------------------------------------------------------------
 
 setwd("G:/My Drive/ACRUISE/ACRUISE2/GC")
-voc = read.csv("ACRUISE-2_gc_ships_r0.csv") %>% 
+voc = read.csv("ACRUISE-2_gc_ships_r1.csv") %>% 
   tibble()
 
 
 # Tidy --------------------------------------------------------------------
 
+colOrder = c("carbon_dioxide","methane","ethane","ethene","propane","propene",
+             "iso_butane","n_butane","acetylene",
+             "but_1_ene","iso_butene","iso_pentane",
+             "n_pentane","cis_2_pentene","benzene",
+             "ethylbenzene","toluene","p_xylene", "m_xylene","o_xylene")
 
-voc_long = voc %>% 
+vocNames = colOrder[colOrder != "carbon_dioxide"]
+
+voc_long_noratio = voc %>% 
   select(-starts_with("X")) %>% # tidy weird excel column
-  pivot_longer(-c(Ship:file)) %>% # make long (values are measurement, uncertainty and flag)
+  pivot_longer(-c(ship:file)) %>% # make long (values are measurement, uncertainty and flag)
   mutate(name = str_replace(name,  "_uncertainty","__uncertainty"), # make separator nice
          name = str_replace(name,  "_flag","__flag"),
          name = ifelse(str_detect(name, "__"), name, paste0(name, "__spec")) # give measurement a name
@@ -26,65 +38,64 @@ voc_long = voc %>%
   pivot_wider(names_from = "type", values_from = "value") %>% # widen the three value types (measurement, uncertainty and flag)
   rename(value = spec) %>% # rename spec to value for semantics
   mutate(value = ifelse(flag == 0, value, NA), # NA all level 2 flagged values
-         Ship = str_trim(Ship, "both"),
-         case_bottle = interaction(case,bottle)) # remove whitespace frome Ship names
+         ship = str_trim(ship, "both"),
+         case_bottle = interaction(case,bottle), # remove whitespace frome ship names
+         name = factor(name,
+                       levels = colOrder)) #order in more sensible way
 
+co2_ratio = voc_long_noratio %>% 
+  select(case, bottle, name, value) %>% 
+  pivot_wider() %>% 
+  pivot_longer(cols = all_of(vocNames)) %>% 
+  mutate(co2ratio = (value/carbon_dioxide)*1000) %>% # * 1000 for prettier numbers
+  select(-value) %>% 
+  pivot_wider(values_from = co2ratio) %>% 
+  select(-carbon_dioxide) %>% 
+  pivot_longer(cols = vocNames, values_to = "co2ratio")
 
-
-
-
-
-
-
-
-
-
-
+voc_long = left_join(voc_long_noratio, co2_ratio, by = c("case", "bottle", "name"))
 
 # plot --------------------------------------------------------------------
 
 
 #all ships by ship (no background)
 voc_long %>% 
-  filter(!is.na(Ship), !Ship=="background") %>% 
+  filter(flight %in% c("C263")) %>% 
+  #filter(name %in% c("ethene", "propene", "acetylene", "but_1_ene", "n_pentane","cis_2_pentene")) %>% 
+  #filter(ship=="background") %>% 
   ggplot()+
-  geom_bar(aes(case_bottle, value, fill = name), position = "fill", stat = "identity", width=0.2)+
+  geom_bar(aes(case_bottle, value, fill = name), position = "stack", stat = "identity", width=0.2)+
   scale_fill_viridis(discrete=TRUE) +
-  facet_wrap(~Ship, scales = "free_x", ncol=10)+
+  facet_wrap(~name, scales = "free_y")+
   labs(x="SWAS case / bottle", y="VOC content")+
   theme_minimal() +
   theme(plot.title = element_blank(),  
-        text = element_text(size=14, colour="white"),
-        #axis.text = element_text(colour="black"),
-        axis.text = element_blank(),
+        text = element_text(size=12, colour="black"),
+        axis.text = element_text(colour="black"),
         legend.title = element_blank(),
-        strip.text = element_text(colour = 'white'),
+        strip.text = element_text(colour = 'black'),
         panel.spacing.x = unit(0,"line"),
         panel.border = element_rect(color = "grey", fill = NA, size = 1), 
         panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank())
 
 
-#all ships better
-
-
-
 #specific ship/flight etc
 voc_long %>% 
-  filter(flight %in% c("C256")) %>% 
-  filter(Ship %in% c("Anthem of the Seas", "background")) %>% 
+  filter(flight %in% c("C261")) %>% 
+  filter(name != "methane" & name != "carbon_dioxide") %>% 
   ggplot()+
-  geom_bar(aes(case_bottle, value, fill = name), position = "stack", stat = "identity")+
+  geom_bar(aes(case_bottle, co2ratio, fill = name), position = "stack", stat = "identity")+
   scale_fill_viridis(discrete=TRUE) +
-  facet_grid(~Ship, scales = "free_x", space='free')+
+  facet_grid(~ship, scales = "free_x", space='free')+
   labs(x="SWAS case / bottle", y="VOC content (ppb)")+
   theme_minimal() +
   theme(plot.title = element_blank(),  
-        text = element_text(size=14, colour="white"),
-        axis.text = element_text(colour="white"),
-        axis.text.x = element_blank(),
+        text = element_text(size=14, colour="black"),
+        axis.text = element_text(colour="black"),
+        axis.text.y = element_blank(),
         legend.title = element_blank(),
-        strip.text = element_text(colour = 'white'),
+        strip.text = element_text(colour = 'black'),
         panel.spacing.x = unit(0,"line"),
         panel.border = element_rect(color = "grey", fill = NA, size = 1), 
         panel.grid.major = element_blank(), 
@@ -94,7 +105,7 @@ voc_long %>%
 
 #all by bottle
 plot_lables = voc_long %>% 
-  filter(Ship %in% "background") %>% 
+  filter(ship %in% "background") %>% 
   select(case_bottle, flight) %>% 
   mutate(y = -0.1) %>% 
   distinct()
@@ -106,7 +117,7 @@ voc_long %>%
   geom_text(data = plot_lables,
             aes(case_bottle, y, label=flight))+
   scale_fill_viridis(discrete=TRUE) +
-  #facet_wrap(~Ship, scales = "free_x")+
+  #facet_wrap(~ship, scales = "free_x")+
   labs(x="SWAS case / bottle", y="Percentage")+
   theme_minimal() +
   theme(plot.title = element_blank(),  text = element_text(size=14, colour="black"), axis.text = element_text(colour = "black"))
@@ -114,9 +125,9 @@ voc_long %>%
 
 #all divided into flights
 voc_long %>% 
-  filter(Ship %in% c("background"))  %>% 
+  filter(ship %in% c("background"))  %>% 
   ggplot()+
-  geom_bar(aes(case_bottle, value, fill = name), position = "stack", stat = "identity")+
+  geom_bar(aes(case_bottle, value, fill = name), position = "fill", stat = "identity")+
   # geom_text(data = plot_lables,
   #           aes(case_bottle, y, label=flight))+
   scale_fill_viridis(discrete=TRUE) +
@@ -124,11 +135,11 @@ voc_long %>%
   labs(x="SWAS case / bottle", y="VOC content (ppb)")+
   theme_minimal() +
   theme(plot.title = element_blank(),  
-        text = element_text(size=14, colour="white"),
-        axis.text = element_text(colour="white"),
+        text = element_text(size=14, colour="black"),
+        axis.text = element_text(colour="black"),
         axis.text.x = element_blank(),
         legend.title = element_blank(),
-        strip.text = element_text(colour = 'white'),
+        strip.text = element_text(colour = 'black'),
         panel.spacing.x = unit(0,"line"),
         panel.border = element_rect(color = "grey", fill = NA, size = 1), 
         panel.grid.major = element_blank(), 
@@ -137,7 +148,7 @@ voc_long %>%
 
 #all ordered
 plot_data = voc_long %>% 
-  filter(Ship == "background") %>% 
+  filter(ship == "background") %>% 
   nest_by(case_bottle) %>% 
   mutate(s = sum(data$value, na.rm = T),
          case_bottle = as.character(case_bottle)) %>% 
@@ -154,6 +165,61 @@ plot_data %>%
   geom_bar(aes(case_bottle, value, fill = name), position = "stack", stat = "identity")+
   geom_text(data = plot_lables,
             aes(case_bottle, -0.1, label = flight))
+
+
+
+
+# -------------------------------------------------
+
+### mapping the flight ###
+
+swas <- read.csv("G:/My Drive/ACRUISE/ACRUISE2/SWAS_ACRUISE2/swas_bottle_coord.csv", stringsAsFactors = F)
+
+#pick flight 
+flights <- dm %>% filter(flight == 261) %>% na.omit()
+
+flights <- flights %>% mutate(wd = shonarrr::calc_wind_direction(flights$U_C,flights$V_C))
+
+bottles <-  swas2 %>% 
+  mutate(case_bottle = interaction(Case,Bottle)) %>% 
+  rename(LON_GIN = lon_start,
+         LAT_GIN = lat_start) %>%
+  filter(Flight == "C261")
+
+
+#make map box
+bbox_cropped=c(min(flights$LON_GIN-0.1),min(flights$LAT_GIN-0.1),max(flights$LON_GIN+0.1),max(flights$LAT_GIN+0.1))
+bbox_cropped=c(-7.3, 51, -5, 51.75)
+
+#make a map background
+mymap = ggmap::get_stamenmap(bbox_cropped, zoom = 7)
+
+#plot stuff on the map
+ggmap(mymap)+
+  geom_point(data = flights, 
+             aes(LON_GIN,LAT_GIN),
+             size = 1,
+             alpha = .7,
+             colour="goldenrod2") +
+  geom_point(data=bottles,
+             aes(LON_GIN,LAT_GIN),
+             size = 2,
+             shape=4,
+             stroke=2,
+             colour="deeppink4") +
+  geom_label_repel(data=bottles,
+             aes(x=LON_GIN,
+                 y=LAT_GIN,
+                 label=case_bottle))+
+  theme_minimal() +
+  theme(axis.title = element_blank())
+
+
+
+
+
+
+
 
 
 
