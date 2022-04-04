@@ -4,11 +4,13 @@
 library(dplyr)
 library(ggmap)
 library(ggplot2)
+library(ggrepel)
 library(tidyverse)
 library(lubridate) 
 library(viridis)
 library(data.table)
 library(openair)
+library(shonarrr)
 
 #############################################################################
 ### Merge ###
@@ -37,77 +39,6 @@ for (file in flight_list){
 
 saveRDS(flights, "./ACRUISE-2_merged_r0.RDS")
 write.csv(flights, "./ACRUISE-2_merged_r0.csv")
-
-
-
-#############################################################################
-### Format SWAS ###
-
-#set working directory
-setwd("G:/My Drive/ACRUISE/ACRUISE2/data_raw/swas_soft_logs")
-
-#list all swas logs
-swas_list <- list.files("./", pattern = "log")
-
-#merge all files 
-for (file in swas_list){
-  # if the merged dataset doesn't exist, create it
-  if (!exists("swas")){
-    swas <- read.csv(file, 
-                     skip = 2, 
-                     header = T, 
-                     stringsAsFactors = F)
-  }
-  # if the merged dataset does exist, append to it
-  if (exists("swas")){
-    temp_dataset <-read.csv(file, 
-                            skip = 2, 
-                            header = T, 
-                            stringsAsFactors = F)
-    swas<-rbind(swas, temp_dataset)
-    rm(temp_dataset)
-  }
-}
-
-#format swas data
-swas <- swas %>%
-  dplyr::mutate(Sample.Start=as.POSIXct(Sample.Start, 
-                                        origin="1970-01-01", 
-                                        tz="UTC"), 
-                Sample.End=as.POSIXct(Sample.End, 
-                                      origin="1970-01-01", 
-                                      tz="UTC")) %>%
-  dplyr::rename(case=CASE.ID,
-                canister=Canister,
-                start=Sample.Start,
-                end=Sample.End,
-                pres_psi=Pressure.at.close) %>%
-  dplyr::select(., c(case, canister, start, end, pres_psi))
-
-#tidy up
-rm(temp_dataset, file, swas_list)
-
-#remove wonky bottles
-#swas$pres_psi[swas$pres_psi<30] <- NA
-#swas <- na.omit(swas)
-
-#remove duplicates
-swas <- dplyr::distinct(swas)
-
-#extract lat lon from the bulk stats file
-latlon <- dplyr::select(dm, c(date,LAT_GIN, LON_GIN))
-
-#round seconds and marry up time zones
-swas$date <- round.POSIXt(swas$Start, units = "secs") %>% as.POSIXct(tz="UTC")
-latlon$date <- round.POSIXt(latlon$date, units = "secs") %>% as.POSIXct(tz="UTC")
-
-#marry swas and lat lon 
-swas2 <-  merge(swas, latlon, by="date", all.x=T) 
-
-#save
-saveRDS(swas, "./swas_all_logs_r0.RDS")
-write.csv(swas, "./swas_all_logs_r0.csv")
-
 
 
 
@@ -212,56 +143,97 @@ write.csv(corechem2, "./corechem_prelim.csv")
 ############################################################################
 ### SWAS + LATLON DRAMA ###
 
-#read swas csv & remove NAs so merge doesn't freak out
-swas <- read.csv("G:/My Drive/ACRUISE/ACRUISE2/ACRUISE_latlon.csv") %>% na.omit()
-swas$Start <- dmy_hms(swas$Start)
-swas$End <- dmy_hms(swas$End)
+# read the swas file (manually pre processed, because automated attempts resulted in some garbage)
+swas <- read.csv("G:/My Drive/ACRUISE/ACRUISE2/SWAS_ACRUISE2/swas_soft_logs/combined_swas_logs.csv") %>% na.omit()
 
-#read bulk core merge
+# read general flight dat file
 dm <- readRDS("G:/My Drive/ACRUISE/ACRUISE2/data_raw/core_for_stats/ACRUISE-2_merged_r0.RDS")
 
-#extract coordinates data
-latlon <- data.frame(dm$date, dm$LAT_GIN, dm$LON_GIN) %>% rename(lat=dm.LAT_GIN,lon=dm.LON_GIN, date=dm.date)
+# format swas data
+swas <- swas %>%
+  dplyr::mutate(Sample.Start=as.POSIXct(Sample.Start, 
+                                        origin="1970-01-01", 
+                                        tz="UTC"), 
+                Sample.End=as.POSIXct(Sample.End, 
+                                      origin="1970-01-01", 
+                                      tz="UTC")) %>%
+  dplyr::rename(case=Case,
+                bottle=Bottle,
+                start=Sample.Start,
+                end=Sample.End,
+                pres_psi=Pressure.at.close,
+                bottle_id=Bottle.ID) %>%
+  dplyr::select(., c(bottle_id, case, bottle, start, end, pres_psi,))
 
-#round seconds and marry up time zones
-swas$date <- round.POSIXt(swas$Start, units = "secs") %>% as.POSIXct(tz="UTC")
+# remove flights that don't concern us to avoid unnecessary potential for confusion
+dm <- dm %>% filter(flight != 249)
+
+# get rid of the dubious NAs in the core faam (there's a vaguely legit reason why they are there, but don't remember rn)
+cnt_na <- apply(dm, 1, function(z) sum(is.na(z))) # alternatively drop_na(LAT_GIN)
+dm <- dm[cnt_na < 3,] # remove if there's more than 3 NAs, seems like I'm not asking for too much 
+
+# extract lat lon from the bulk stats file
+latlon <- dplyr::select(dm, c(date,LAT_GIN, LON_GIN, flight))
+
+# round seconds and marry up time zones
+swas$date <- round.POSIXt(swas$start, units = "secs") %>% as.POSIXct(tz="UTC")
 latlon$date <- round.POSIXt(latlon$date, units = "secs") %>% as.POSIXct(tz="UTC")
 
-#marry swas and lat lon 
-swas2 <-  merge(swas, latlon, by="date", all.x=T) %>% rename(lat_start=lat,lon_start=lon) %>% select(-c(date)) %>% na.omit()
+# marry swas and lat lon 
+swas2 <-  left_join(swas, latlon, by="date", all.x=T) 
 
-#save the bitch
-write.csv(swas2, "G:/My Drive/ACRUISE/ACRUISE2/ACRUISE_latlon_done.csv")
-
-
-
-
-
-
-
-
+# save because let's face it - you'll have to redo it anyway
+saveRDS(swas2, "G:/My Drive/ACRUISE/ACRUISE2/SWAS_ACRUISE2/swas_all_logs_r1.RDS")
+write.csv(swas2, "G:/My Drive/ACRUISE/ACRUISE2/SWAS_ACRUISE2/swas_all_logs_r1.csv")
 
 ############################################################################
 ### MAPS ###
 
-#kick out NAs
-flights <- flights %>% drop_na(LAT_GIN)
-flights <- filter(flights, flight == 261)
+# pick flight(s)
+flights <- dm %>% filter(flight == 261) %>% na.omit() # just in case so the map box doesn't freak out
+bottles <- swas2 %>% filter(flight == 261)
 
 #make map box
 bbox_cropped=c(min(flights$LON_GIN-0.1),min(flights$LAT_GIN-0.1),max(flights$LON_GIN+0.1),max(flights$LAT_GIN+0.1))
+#bbox_cropped=c(-7.3, 51, -5, 51.75)
 
 #make a map background
-mymap = ggmap::get_stamenmap(bbox_cropped, zoom = 6)
+mymap = ggmap::get_stamenmap(bbox_cropped, zoom = 7)
 
-#plot stuff on the map
+#plot swas & flight tracks on the map
 ggmap(mymap)+
-  geom_point(data = swas, 
-            aes(LON_GIN,LAT_GIN),
-            size = 1,
-            alpha = .8) +
-  scale_colour_viridis(discrete=TRUE) +
-  #theme_minimal() +
-  theme(text = element_text(size=14), axis.title = element_blank())+
-  guides(colour=F)
+  geom_point(data = flights, 
+             aes(LON_GIN,LAT_GIN),
+             size = 1,
+             alpha = .7,
+             colour="goldenrod2") +
+  geom_point(data=bottles,
+             aes(LON_GIN,LAT_GIN),
+             size = 2,
+             shape=4,
+             stroke=2,
+             colour="deeppink4") +
+  geom_label_repel(data=bottles,
+                   aes(x=LON_GIN,
+                       y=LAT_GIN,
+                       label=bottle_id))+
+  theme_minimal() +
+  theme(axis.title = element_blank())
+
+#wind direction
+flights <- flights %>% mutate(wd = shonarrr::calc_wind_direction(flights$U_C,flights$V_C))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
