@@ -51,10 +51,10 @@ dm$ch4[dm$ch4_flag==3] = NA
 
 
 #crop data by date & time
-data_cropped = dm %>%
-  filter(between(date, 
-                 ymd_hms("2019-07-11 10:32:00"),
-                 ymd_hms("2019-07-11 11:04:00")))
+data_cropped = so2 %>%
+  filter(between(UTC_time, 
+                 ymd_hms("2021-10-04 10:30:00"),
+                 ymd_hms("2021-10-04 11:00:00")))
 
 #choose data to plot
 data_plot = dm
@@ -77,7 +77,7 @@ data_merge$date[data_merge$so2_teco > 10 & lubridate::hour(dm$date) >= 14] %>%
 
 #############################  INTERACTIVE PLOTS #################################
 
-data_merge_xts = xts::xts(file1[,c("CO2_ppm")],order.by = file1$Time)
+data_merge_xts = xts::xts(dm[,c("AltMSL")],order.by = dm$date)
 
 #timezone important, defaults to false
 dygraphs::dygraph(data_merge_xts) %>% 
@@ -96,14 +96,14 @@ dm_plot = dm
 
 #make a basic plot
 ggplot() +
-  geom_line(data=dm_plot,
-            aes(date, so2_teco
-                , col = co_aero
-                )) +
+  geom_line(data=data_cropped,
+            aes(UTC_time, SO2_conc_scaled),
+            colour="#FDE725FF",
+            size=2) +
   scale_color_viridis() +
-  labs(x="Time UTC", y="SO2 / ppb", color="CO2 / ppm") +
-  theme(plot.title = element_text(hjust = 0.5),  text = element_text(size=24))+
-  guides(size = FALSE) 
+  labs(x="Time", y=bquote(''~SO[2]~(ppb)*''))+
+  theme_minimal() +
+  theme(plot.title = element_blank(),  text = element_text(size=20, colour="white"), axis.text = element_text(colour = "white"))
 
 #############################################################################
 
