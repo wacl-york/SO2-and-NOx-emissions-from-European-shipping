@@ -155,10 +155,6 @@ ggplot() +
 
 #############################  3D PLOTS #################################
 
-#choose data
-dm_map = dm1
-
-
 axx <- list(
   title="Longitude"
   #,range = c(-9.865,-9.84)
@@ -170,39 +166,36 @@ axy <- list(
 )
 
 axz <- list(
-  title="Altitude / ft"#,
+  title="Altitude / m"#,
   #range = c(275,500)
 )
 
+#choose data
+dm_map = downw3 #%>% filter(downw2$xaxis > 49.96)
 
-
+#opacity magic
+dm_map$Li7700CH4[dm_map$Li7700CH4>4] <- 4
 
 plot_ly(data=dm_map, 
         type='scatter3d',
-        x=dm_map$lon,
-        y=dm_map$lat,
-        z=dm_map$hgt_radr_ft,
+        x=dm_map$Lon,
+        y=dm_map$Lat,
+        z=dm_map$AltMSL,
         mode='markers',
-        marker=list(color=dm_map$so2, 
+        marker=list(color=dm_map$Li7700CH4, 
                     na.value = NA,
-                    colorbar=list(title='SO2 / ppb'),
+                    colorbar=list(title='CH4 / ppm'),
                     colorscale='Viridis',
-                    opacity=0.5,
+                    reversescale=T,
+                    opacity=0.7,
                     size=5)) %>%
   layout(
-    title="Ship plume",
+    title="20/06/22 transect 3",
     scene=list(
       xaxis=axx,
       yaxis=axy,
       zaxis=axz
     ))
-
-
-
-scene=list(
-  xaxis=list(title="Longitude"),
-  yaxis=list(title="Latitude"),
-  zaxis=list(title="Altitude / ft"))
 
 
 
