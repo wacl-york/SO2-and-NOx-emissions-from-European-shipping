@@ -171,10 +171,10 @@ axz <- list(
 )
 
 #choose data
-dm_map = downw3 #%>% filter(downw2$xaxis > 49.96)
+dm_map = downw3 #%>% filter(downw1$xaxis > 49.98)
 
 #opacity magic
-dm_map$Li7700CH4[dm_map$Li7700CH4>4] <- 4
+dm_map$Li7700CH4[dm_map$Li7700CH4>3] <- 3
 
 plot_ly(data=dm_map, 
         type='scatter3d',
@@ -190,7 +190,7 @@ plot_ly(data=dm_map,
                     opacity=0.7,
                     size=5)) %>%
   layout(
-    title="20/06/22 transect 3",
+    title="16/06/22 transect 3",
     scene=list(
       xaxis=axx,
       yaxis=axy,
