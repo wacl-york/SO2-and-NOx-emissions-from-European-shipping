@@ -130,6 +130,16 @@ temp = voc_long %>%
   map_df(calc_background)
 
 
+temp %>% 
+  ggplot()+
+  geom_bar(aes(case_bottle, enhancement, fill = name), stat = "identity", position = "stack")
+
+
+temp %>% 
+  pivot_longer(c(value, background, enhancement), names_to = "type")  %>% 
+  ggplot()+
+  geom_bar(aes(case_bottle, value, fill = name), stat = "identity", position = "stack")+
+  facet_wrap(~type,scales = "free_y")
 
 
 
