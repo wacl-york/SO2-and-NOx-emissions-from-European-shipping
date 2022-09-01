@@ -206,12 +206,12 @@ multiplot(map_o3, map_so2, map_nox, map_alt, cols =4)
 
 
 # Use melt to reshape data so values and variables are in separate columns
-dt.df <- melt(ship, measure.vars = c("hgt_radr", "o3", "so2", "nox_rat"))
+dt.df <- melt(dm, measure.vars = c("co2", "ch4","so2" ))
 
-varlabs <-  c(hgt_radr="Altitude (m)", o3="O3 (ppb)", so2="SO2 (ppb)", nox_rat="NO2/NO ")
+varlabs <-  c( so2="SO2", co2="CO2", ch4="CH4")
 
 ggplot(dt.df, aes(x = date, y = value)) +
-  geom_line(aes(color = variable),size=1.5) +
+  geom_line(aes(color = variable),size=1) +
   facet_grid(variable ~ ., scales = "free_y", labeller = labeller(variable=varlabs)) +
   theme_bw()+
   theme(plot.title = element_text(hjust = 0.5), text = element_text(size=24), legend.position = "none", axis.title.x=element_blank(), axis.title.y=element_blank())

@@ -11,7 +11,9 @@ library(shonarrr)
 calc_background = function(dat){
   background = dat %>% 
     filter(ship == "background") %>% 
-    select(name, background = value) %>% 
+    select(name, 
+           background = value,
+           uncert_b = uncertainty) %>% 
     group_by(name) %>% 
     summarise_all(mean, na.rm = T)
   
@@ -19,12 +21,15 @@ calc_background = function(dat){
   ships = dat %>% 
     filter(ship != "background") %>% 
     left_join(background, by = "name") %>% 
-    mutate(enhancement = value-background)
+    mutate(enhancement = value-background,
+           uncert_e = uncertainty + uncert_b)
   
   #
   ships
   
 }
+
+
 
 
 # Read --------------------------------------------------------------------
@@ -46,6 +51,27 @@ colOrder = c("carbon_dioxide","methane","ethane","ethene","propane","propene",
              "n_pentane","cis_2_pentene","benzene",
              "ethylbenzene","toluene","p_xylene", "m_xylene","o_xylene") # order of VOCs (otherwise alphabetical)
 
+colNames <-  labeller(name =
+           c("carbon_dioxide" = "carbon dioxide",
+             "iso_butane" = "iso-butane",
+             "n_butane" = "n-butane",
+             "but_1_ene" = "but-1-ene",
+             "iso_butene" = "iso-butene",
+             "iso_pentane" = "iso-penetane",
+             "n_pentane" = "n-pentane",
+             "cis_2_pentene" = "cis-2-pentene",
+             "p_xylene" = "p-xylene", 
+             "m_xylene" = "m-xylene",
+             "o_xylene" = "o-xylene",
+             "methane" = "methane",
+             "ethane" = "ethane",
+             "ethene" = "ethene",
+             "propane" = "propane",
+             "propene" = "propene",
+             "acetylene" = "acetylene",
+             "ethylbenzene" = "ethylbenzene",
+             "toluene" = "toluene"))
+         
 vocNames = colOrder[colOrder != "carbon_dioxide"] # make CO2 free list for ratios
 
 
@@ -101,7 +127,7 @@ voc_long = left_join(voc_long_noratio, co2_ratio, by = c("case", "bottle", "name
 
 # #subtract backgrounds
 temp = voc_long %>%
-  select(case_bottle, name, value, ship) %>%
+  select(case_bottle, name, value, ship, uncertainty, co2ratio) %>%
   mutate(grp = case_when(
     # case_bottle %in% c("7.9", "7.14", "7.11", "7.12", "7.13", "7.10") ~ 1,
     #                      case_bottle %in% c("7.7", "7.6", "102.06", "102.07", "102.03") ~ 2,
@@ -135,11 +161,31 @@ temp %>%
   geom_bar(aes(case_bottle, enhancement, fill = name), stat = "identity", position = "stack")
 
 
+positions <- c("101.1","101.2","6.6","6.7","6.8","6.9","6.4")
+
+
+
 temp %>% 
   pivot_longer(c(value, background, enhancement), names_to = "type")  %>% 
+  mutate(name = factor(name,
+                       levels = colOrder)) %>%
+  filter(type=="enhancement") %>% 
+  filter(name!="ethylbenzene")%>% 
   ggplot()+
   geom_bar(aes(case_bottle, value, fill = name), stat = "identity", position = "stack")+
-  facet_wrap(~type,scales = "free_y")
+  geom_errorbar(aes(ymin=value-uncert_e, ymax=value+uncert_e,
+                    x=case_bottle),
+                width=.2,
+                position=position_dodge(.9))+
+  scale_x_discrete(limits = positions)+
+  scale_fill_viridis(discrete=TRUE) +
+  theme_bw()+
+  theme(text = element_text(size=14), legend.title = element_blank())+
+  facet_wrap(~name, 
+             scales = "free_y",
+             labeller = colNames)+
+  labs(x= "Case.bottle", y="Enhancement (ppb)")+
+  guides(fill="none")
 
 
 

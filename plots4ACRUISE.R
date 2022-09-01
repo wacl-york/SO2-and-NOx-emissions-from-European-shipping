@@ -77,7 +77,7 @@ data_merge$date[data_merge$so2_teco > 10 & lubridate::hour(dm$date) >= 14] %>%
 
 #############################  INTERACTIVE PLOTS #################################
 
-data_merge_xts = xts::xts(dm[,c("AltMSL")],order.by = dm$date)
+data_merge_xts = xts::xts(dm[,c("hgt_radr")],order.by = dm$date)
 
 #timezone important, defaults to false
 dygraphs::dygraph(data_merge_xts) %>% 
@@ -171,10 +171,11 @@ axz <- list(
 )
 
 #choose data
-dm_map = downw3 #%>% filter(downw1$xaxis > 49.98)
+dm_map = upw #%>% filter(downw1$xaxis > 49.98)
 
 #opacity magic
-dm_map$Li7700CH4[dm_map$Li7700CH4>3] <- 3
+dm_map$Li7700CH4[dm_map$Li7700CH4>8] <- 8
+dm_map$AltMSL[dm_map$AltMSL >700] <- NA
 
 plot_ly(data=dm_map, 
         type='scatter3d',
@@ -190,7 +191,7 @@ plot_ly(data=dm_map,
                     opacity=0.7,
                     size=5)) %>%
   layout(
-    title="16/06/22 transect 3",
+    title="20/06/22 upwind",
     scene=list(
       xaxis=axx,
       yaxis=axy,
