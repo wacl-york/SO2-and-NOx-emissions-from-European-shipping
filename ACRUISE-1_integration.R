@@ -18,7 +18,7 @@ library(ggplot2)
 
 
 # import and format
-dm <-  read.csv("G:/My Drive/ACRUISE/ACRUISE1/merged/c183_merge_2.csv",
+dm <-  read.csv("G:/My Drive/ACRUISE/ACRUISE1/merged/c187_merge.csv",
                 header = T,
                 stringsAsFactors = F)
 dm$time_nano <- as.nanotime(dm$date, format="%d/%m/%Y %H:%M:%E3S", tz="UTC")
@@ -31,7 +31,7 @@ dm$date <- as.POSIXct(dm$date, tz="UTC")
 
 dm <-  dm %>%
   filter(between(date, 
-                 ymd_hms("2019-07-11 10:30:00"),
+                 ymd_hms("2019-07-11 09:00:00"),
                  ymd_hms("2019-07-11 11:00:00"))) # c179
 
 dm <-  dm %>%
@@ -53,7 +53,7 @@ dm <-  dm %>%
 dm <-  dm %>%
   filter(between(date, 
                  ymd_hms("2019-07-13 12:30:00"),
-                 ymd_hms("2019-07-13 14:00:00"))) # c183
+                 ymd_hms("2019-07-13 17:10:00"))) # c183
 
 
 dm <-  dm %>%
@@ -80,11 +80,11 @@ dm <-  dm %>%
 ### SO2 ###
 
 #background 
-bg_so2 <- identify_background(dm$so2, method="gam", k=10)
+bg_so2 <- identify_background(dm$so2, method="gam", k=5)
 
 acruiseR::plot_background(dm$so2, dm$time_nano, bg_so2,  
-                          plume_sd_threshold = 3,
-                          plume_sd_starting = 1,
+                          plume_sd_threshold = 2,
+                          plume_sd_starting = 0.5,
                           ylabel = "Concentration",
                           xlabel = "Time",
                           date_fmt = "%H:%M",
@@ -94,9 +94,10 @@ acruiseR::plot_background(dm$so2, dm$time_nano, bg_so2,
 
 #plumes 
 plumz_so2 <- acruiseR::detect_plumes(dm$so2, bg_so2, dm$time_nano,
-                        plume_sd_threshold = 3,
-                        plume_sd_starting = 1,
-                        plume_buffer = 15)
+                        plume_sd_threshold = 2,
+                        plume_sd_starting = 0.5,
+                        plume_buffer = 15,
+                        refit = TRUE )
 
 
 acruiseR::plot_plumes(dm$so2, dm$time_nano, plumz_so2,
@@ -131,7 +132,8 @@ acruiseR::plot_background(dm$co2, dm$time_nano, bg_co2,
 plumz_co2 <- acruiseR::detect_plumes(dm$co2, bg_co2, dm$time_nano,
                                  plume_sd_threshold = 3,
                                  plume_sd_starting = 0.5,
-                                 plume_buffer = 15)
+                                 plume_buffer = 15,
+                                 refit = TRUE)
 
 
 acruiseR::plot_plumes(dm$co2, dm$time_nano, plumz_co2,
@@ -151,7 +153,7 @@ areaz_co2 <-  acruiseR::integrate_aup_trapz(dm$co2, dm$time_nano, plumz_co2,
 ### CH4 ###
 
 #background 
-bg_ch4 <- identify_background(dm$ch4, method="gam", k=10)
+bg_ch4 <- identify_background(dm$ch4, method="gam", k=50)
 
 acruiseR::plot_background(dm$ch4, dm$time_nano, bg_ch4,  
                           plume_sd_threshold = 3,
@@ -166,7 +168,8 @@ acruiseR::plot_background(dm$ch4, dm$time_nano, bg_ch4,
 plumz_ch4 <- acruiseR::detect_plumes(dm$ch4, bg_ch4, dm$time_nano,
                                      plume_sd_threshold = 3,
                                      plume_sd_starting = 0.5,
-                                     plume_buffer = 15)
+                                     plume_buffer = 15,
+                                     refit=TRUE)
 
 
 acruiseR::plot_plumes(dm$ch4, dm$time_nano, plumz_ch4,
@@ -188,14 +191,14 @@ areaz_ch4 <-  acruiseR::integrate_aup_trapz(dm$ch4, dm$time_nano, plumz_ch4,
 
 areaz_so2$start <- as.POSIXct(areaz_so2$start)
 areaz_so2$end <- as.POSIXct(areaz_so2$end)
-write.csv(areaz_so2, "G:/My Drive/ACRUISE/Stuarts_integration/c188_so2.csv")
+write.csv(areaz_so2, "G:/My Drive/ACRUISE/Stuarts_integration/c190_so2.csv")
 
 
 areaz_co2$start <- as.POSIXct(areaz_co2$start)
 areaz_co2$end <- as.POSIXct(areaz_co2$end)
-write.csv(areaz_co2, "G:/My Drive/ACRUISE/Stuarts_integration/c188_co2.csv")
+write.csv(areaz_co2, "G:/My Drive/ACRUISE/Stuarts_integration/c190_co2.csv")
 
 
 areaz_ch4$start <- as.POSIXct(areaz_ch4$start)
 areaz_ch4$end <- as.POSIXct(areaz_ch4$end)
-write.csv(areaz_ch4, "G:/My Drive/ACRUISE/Stuarts_integration/c183_ch4.csv")
+write.csv(areaz_ch4, "G:/My Drive/ACRUISE/Stuarts_integration/c179_ch4.csv")
