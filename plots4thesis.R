@@ -16,7 +16,7 @@ library(ggplot2)
 library(scales)
 
 
-dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-1_peaks_latlons.csv",
+dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/SFC_ACRUISE_2_preliminary.csv",
          stringsAsFactors = F,
          header=T)
 
@@ -27,14 +27,13 @@ dm$SFC <- dm$SFC*100
 
 
 ggplot(data=dm)+
-  geom_point(aes(x=Flight, 
-                 y=SFC, 
-                 fill=Ship),
+  geom_point(aes(x=Number, 
+                 y=SFC),
              shape=21,
-             size=4) + 
-  geom_errorbar(aes(x=Flight,
+             size=5) + 
+  geom_errorbar(aes(x=Number,
                       y=SFC,
-                      colour=Ship,
+                      #colour=Ship,
                       ymin=SFC-SFC*0.49, 
                       ymax=SFC+SFC*0.49),
                 alpha=0.7,
@@ -46,3 +45,8 @@ ggplot(data=dm)+
   viridis::scale_colour_viridis(option="magma", discrete=T) +
   labs(x= "Flight", y="SFC (%)")+
   guides(colour="none")
+
+
+
+
+

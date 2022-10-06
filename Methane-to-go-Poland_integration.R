@@ -15,6 +15,8 @@ library(measurements)
 library(acruiseR)
 library(nanotime)
 library(ggplot2)
+library(plotly)
+
 
 
 # import and format
@@ -60,7 +62,9 @@ acruiseR::plot_plumes(dm$Pic2401CH4, dm$time_nano, plumz_ch4p,
                       ylabel = "Concentration",
                       xlabel = "Time",
                       date_fmt = "%H:%M",
-                      bg_alpha = 0.9)  #+ ylim(1.95,2.05)
+                      bg_alpha = 0.9)+
+  theme(legend.position = "none")  #+ ylim(1.95,2.05)
+ggplotly()
 
 #areas
 areaz_ch4p <-  acruiseR::integrate_aup_trapz(dm$Pic2401CH4, dm$time_nano, plumz_ch4p, dx=1)
@@ -94,7 +98,9 @@ acruiseR::plot_plumes(dm$Li7700CH4, dm$time_nano, plumz_ch4l,
                       ylabel = "Concentration",
                       xlabel = "Time",
                       date_fmt = "%H:%M",
-                      bg_alpha = 0.9)  + ylim(1.95,2.15)
+                      bg_alpha = 0.9) +
+  theme(legend.position = "none")  #+ ylim(1.95,2.05)
+ggplotly()
 
 #areas
 areaz_ch4l <-  acruiseR::integrate_aup_trapz(dm$Li7700CH4, dm$time_nano, plumz_ch4l, dx=1)
@@ -154,6 +160,53 @@ write.csv(areaz_ch4l, "G:/My Drive/ACRUISE/Stuarts_integration/Licor_ch4.csv")
 areaz_co2$start <- as.POSIXct(areaz_co2$start)
 areaz_co2$end <- as.POSIXct(areaz_co2$end)
 write.csv(areaz_co2, "G:/My Drive/ACRUISE/Stuarts_integration/c190_co2.csv")
+
+
+
+
+
+
+
+
+
+
+##########################
+
+dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/Methane-to-go-Poland_integration/CH4_comparison.csv")
+
+
+ggplot(data = dm,
+       aes(x=area_L, y=area_P))+
+  stat_poly_line(colour="cornflowerblue", size=2, se=FALSE) +
+  geom_point(size=5, 
+             shape=21)+
+  stat_poly_eq(aes(label = paste(after_stat(eq.label),
+                                 after_stat(rr.label),
+                                 sep = "*\", \"*")),
+               size=6) +
+  theme_bw()+
+  labs(x="Licor", y="Picarro", title="F04 methane peak areas, quicklook data") +
+  theme(plot.title = element_text(hjust = 0.5),  text = element_text(size=14)) #14 large, 12 standard
+
+
+ggplotly()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

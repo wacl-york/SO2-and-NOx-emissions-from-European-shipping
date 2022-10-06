@@ -5,7 +5,10 @@ library(scales)
 dm1 <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/SFC_ACRUISE_1_preliminary.csv", stringsAsFactors = F)
 
 
-dm2 <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/SFC_ACRUISE_2_preliminary.csv", stringsAsFactors = F)
+dm2 <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-2_integration/ACRUISE-2_integration_preliminary.csv", stringsAsFactors = F)
+
+dm_seca <- dm2 %>% filter(location != 1)
+dm_free <- dm2 %>% filter(location == 1)
 
 
 
@@ -37,13 +40,13 @@ ggplot()+
                      colour="a",
                      fill="a"),
                  bins=10,
-                 alpha=0.3)+
-  geom_histogram(aes(x=dm2$SFC, 
+                 alpha=0.8)+
+  geom_histogram(aes(x=dm_free$SFC, 
                      y=(..count..)/sum(..count..),
                      colour="b",
                      fill="b"),
                  bins=10,
-                 alpha=0.3)+
+                 alpha=0.4)+
   scale_colour_manual(name = "Colors", 
                      values = c("a" = "black", 
                                 "b" = "blue"),
@@ -60,5 +63,21 @@ ggplot()+
   theme(text = element_text(size=14))+
   labs(y= "Percentage of plumes", 
        x="Apparent sulphur fuel content (%)")
+
+
+ggplot()+
+  geom_histogram(aes(x=dm_seca$SFC, 
+                     y=(..count..)/sum(..count..)),
+                 colour="black",
+                 fill="black",
+                 bins=10,
+                 alpha=0.8)+
+  scale_y_continuous(labels=percent)+
+  scale_x_continuous(labels=percent)+
+  theme_bw()+
+  theme(text = element_text(size=14))+
+  labs(y= "Percentage of plumes", 
+       x="Apparent sulphur fuel content (%)")
+
 
 
