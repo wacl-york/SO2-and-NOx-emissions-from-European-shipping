@@ -134,6 +134,28 @@ acruiseR::plot_plumes(dm$SO2_conc_scaled, dm$time_nano, plumz_so2,
 ggplotly()
 
 
+
+
+#thesis - peak zoom 
+dm3 <- cbind.data.frame(dm$date,dm$SO2_conc_scaled, backg) %>%
+  dplyr::rename(date = `dm$date`,
+                so2 = `dm$SO2_conc_scaled`)
+
+dm3 <-  dm3 %>%
+  filter(between(date, 
+                 ymd_hms("2021-10-11 13:23:00"),
+                 ymd_hms("2021-10-11 13:30:00"))) # c264
+
+
+ggplot()+
+  geom_line(aes(dm3$date, dm3$so2))
+
+
+
+
+
+
+
 #areas
 areaz_so2 <-  acruiseR::integrate_aup_trapz(dm$SO2_conc_scaled, dm$time_nano, plumz_so2, dx=1)
 
