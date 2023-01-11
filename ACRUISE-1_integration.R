@@ -18,7 +18,7 @@ library(ggplot2)
 
 
 # import and format
-dm <-  read.csv("G:/My Drive/ACRUISE/ACRUISE1/merged/c187_merge.csv",
+dm <-  read.csv("G:/My Drive/ACRUISE/ACRUISE1/merged/c190_merge.csv",
                 header = T,
                 stringsAsFactors = F)
 dm$time_nano <- as.nanotime(dm$date, format="%d/%m/%Y %H:%M:%E3S", tz="UTC")
@@ -80,24 +80,24 @@ dm <-  dm %>%
 ### SO2 ###
 
 #background 
-bg_so2 <- identify_background(dm$so2, method="gam", k=6)
+bg_so2 <- identify_background(dm$so2, method="gam", k=10)
 
 acruiseR::plot_background(dm$so2, dm$time_nano, bg_so2,  
-                          plume_sd_threshold = 2,
-                          plume_sd_starting = 0.5,
+                          plume_sd_threshold = 3,
+                          plume_sd_starting = 1,
                           ylabel = "Concentration",
                           xlabel = "Time",
                           date_fmt = "%H:%M",
                           bg_alpha = 0.9) +
   theme(legend.position = "none") #+ ylim(-2,15) 
 
-ggplotly()
+#ggplotly()
             
 
 #plumes 
 plumz_so2 <- acruiseR::detect_plumes(dm$so2, bg_so2, dm$time_nano,
-                        plume_sd_threshold = 2,
-                        plume_sd_starting = 0.5,
+                        plume_sd_threshold = 3,
+                        plume_sd_starting = 1,
                         plume_buffer = 15,
                         refit = TRUE )
 
@@ -109,7 +109,7 @@ acruiseR::plot_plumes(dm$so2, dm$time_nano, plumz_so2,
                       bg_alpha = 0.9)+
   theme(legend.position = "none") #+ ylim(-2,15) 
 
-ggplotly()
+#ggplotly()
 
 #areas
 areaz_so2 <-  acruiseR::integrate_aup_trapz(dm$so2, dm$time_nano, plumz_so2, dx=1)
@@ -121,25 +121,25 @@ areaz_so2 <-  acruiseR::integrate_aup_trapz(dm$so2, dm$time_nano, plumz_so2, dx=
 ### CO2 ###
 
 #background 
-bg_co2 <- identify_background(dm$co2, method="gam", k=10)
+bg_co2 <- identify_background(dm$co2, method="gam", k=50)
 
 
 acruiseR::plot_background(dm$co2, dm$time_nano, bg_co2,  
-                          plume_sd_threshold = 4,
-                          plume_sd_starting = 2,
+                          plume_sd_threshold = 3,
+                          plume_sd_starting = .5,
                           ylabel = "Concentration",
                           xlabel = "Time",
                           date_fmt = "%H:%M",
                           bg_alpha = 0.9) +
   theme(legend.position = "none")
 
-ggplotly()
+#ggplotly()
 
 
 #plumes 
 plumz_co2 <- acruiseR::detect_plumes(dm$co2, bg_co2, dm$time_nano,
-                                 plume_sd_threshold = 4,
-                                 plume_sd_starting = 2,
+                                 plume_sd_threshold = 3,
+                                 plume_sd_starting = .5,
                                  plume_buffer = 15,
                                  refit = TRUE)
 
@@ -151,11 +151,15 @@ acruiseR::plot_plumes(dm$co2, dm$time_nano, plumz_co2,
                       bg_alpha = 0.9) +
   theme(legend.position = "none")
 
-ggplotly()
+#ggplotly()
 
 #areas
 areaz_co2 <-  acruiseR::integrate_aup_trapz(dm$co2, dm$time_nano, plumz_co2,
                                         dx=1) 
+
+
+
+
 
 
 

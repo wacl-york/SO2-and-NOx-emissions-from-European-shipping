@@ -66,4 +66,28 @@ ggplot(data=dm)+
 
 
 
+#########
+
+#origin vs arrrr
+
+dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-1_integration/origin_comparison/comparison.csv", stringsAsFactors = F)
+
+dm <- dm[-c(7:16)]
+
+
+ggplot(data=dm,
+       aes(x=SO2_origin/CO2_origin, 
+           y=SO2_r/CO2_r))+
+  stat_poly_line(colour="cornflowerblue", 
+                 size=1) + #2 large, 1 standard
+  stat_poly_eq(aes(label = paste(after_stat(eq.label),
+                                 after_stat(rr.label),
+                                 sep = "*\", \"*"))) +
+  geom_point(size=4,
+             shape=21) +
+  theme_bw()+
+  theme(text = element_text(size=13), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)
+  )+
+  labs(x= "Origin Pro", y="R")
 

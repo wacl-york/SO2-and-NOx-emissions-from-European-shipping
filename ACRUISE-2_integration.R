@@ -124,12 +124,19 @@ plumz_so2 <- acruiseR::detect_plumes(dm$SO2_conc_scaled, bg_so2, dm$time_nano,
                                      refit = TRUE )
 
 
-acruiseR::plot_plumes(dm$SO2_conc_scaled, dm$time_nano, plumz_so2,
+g = acruiseR::plot_plumes(dm$SO2_conc_scaled, dm$time_nano, plumz_so2,
                       ylabel = "Concentration",
                       xlabel = "Time",
                       date_fmt = "%H:%M",
                       bg_alpha = 0.9)+
   theme(legend.position='none')#+ ylim(-2,10)
+
+plume_data = g$data %>% 
+  tibble()
+
+plume_data %>% 
+  filter(is.na(plume_id)) 
+
 
 ggplotly()
 
@@ -143,12 +150,30 @@ dm3 <- cbind.data.frame(dm$date,dm$SO2_conc_scaled, backg) %>%
 
 dm3 <-  dm3 %>%
   filter(between(date, 
-                 ymd_hms("2021-10-11 13:23:00"),
-                 ymd_hms("2021-10-11 13:30:00"))) # c264
+                 ymd_hms("2021-10-11 11:45:00"),
+                 ymd_hms("2021-10-11 11:49:00"))) # c264
 
 
 ggplot()+
-  geom_line(aes(dm3$date, dm3$so2))
+  geom_line(aes(dm3$date, dm3$so2),
+            colour="#fc8961",
+            size=2,
+            alpha=0.8)+
+  geom_line(aes(dm3$date, dm3$backg),
+            colour="#51127c",
+            size=2,
+            alpha=0.8)+
+  geom_point(aes(dm3$date, dm3$so2),
+             colour="black",
+             size=2,
+             shape=4,
+             stroke=2)+
+  theme_bw()+
+  theme(text = element_text(size=13), 
+        #legend.title = element_blank(),
+  )+
+  labs(x= "Time", y=bquote(''~SO[2]~(ppb)~''))#+
+#guides(colour="none")
 
 
 
