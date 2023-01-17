@@ -15,10 +15,11 @@ library(measurements)
 library(acruiseR)
 library(nanotime)
 library(ggplot2)
+library(plotly)
 
 
 # import and format
-dm <-  read.csv("G:/My Drive/ACRUISE/ACRUISE1/merged/c190_merge.csv",
+dm <-  read.csv("G:/My Drive/ACRUISE/ACRUISE1/merged/c180_merge.csv",
                 header = T,
                 stringsAsFactors = F)
 dm$time_nano <- as.nanotime(dm$date, format="%d/%m/%Y %H:%M:%E3S", tz="UTC")
@@ -36,13 +37,13 @@ dm <-  dm %>%
 
 dm <-  dm %>%
   filter(between(date, 
-                 ymd_hms("2019-07-11 13:20:00"),
-                 ymd_hms("2019-07-11 14:20:00"))) # c180
+                 ymd_hms("2019-07-11 13:40:00"),
+                 ymd_hms("2019-07-11 14:00:00"))) # c180
 
 dm <-  dm %>%
   filter(between(date, 
-                 ymd_hms("2019-07-12 08:10:00"),
-                 ymd_hms("2019-07-12 12:00:00"))) # c181
+                 ymd_hms("2019-07-12 10:45:00"),
+                 ymd_hms("2019-07-12 11:30:00"))) # c181
 
 dm <-  dm %>%
   filter(between(date, 
@@ -54,6 +55,8 @@ dm <-  dm %>%
   filter(between(date, 
                  ymd_hms("2019-07-13 12:30:00"),
                  ymd_hms("2019-07-13 17:10:00"))) # c183
+
+dm$co2[dm$co2 > 800] <- NA
 
 
 dm <-  dm %>%
@@ -80,11 +83,12 @@ dm <-  dm %>%
 ### SO2 ###
 
 #background 
-bg_so2 <- identify_background(dm$so2, method="gam", k=10)
+
+bg_so2 <- identify_background(dm$so2, method="gam", k=3)
 
 acruiseR::plot_background(dm$so2, dm$time_nano, bg_so2,  
-                          plume_sd_threshold = 3,
-                          plume_sd_starting = 1,
+                          plume_sd_threshold = 2,
+                          plume_sd_starting = .5,
                           ylabel = "Concentration",
                           xlabel = "Time",
                           date_fmt = "%H:%M",
@@ -96,8 +100,8 @@ acruiseR::plot_background(dm$so2, dm$time_nano, bg_so2,
 
 #plumes 
 plumz_so2 <- acruiseR::detect_plumes(dm$so2, bg_so2, dm$time_nano,
-                        plume_sd_threshold = 3,
-                        plume_sd_starting = 1,
+                        plume_sd_threshold = 2,
+                        plume_sd_starting = .5,
                         plume_buffer = 15,
                         refit = TRUE )
 
@@ -112,8 +116,7 @@ acruiseR::plot_plumes(dm$so2, dm$time_nano, plumz_so2,
 #ggplotly()
 
 #areas
-areaz_so2 <-  acruiseR::integrate_aup_trapz(dm$so2, dm$time_nano, plumz_so2, dx=1)
-
+areaz_so2 <-  acruiseR::integrate_aup_trapz(dm$so2, dm$time_nano, plumz_so2, dx=1, uncertainty = 0.06, uncertainty_type = "relative")
 
 
 
@@ -125,7 +128,7 @@ bg_co2 <- identify_background(dm$co2, method="gam", k=50)
 
 
 acruiseR::plot_background(dm$co2, dm$time_nano, bg_co2,  
-                          plume_sd_threshold = 3,
+                          plume_sd_threshold = 1.2,
                           plume_sd_starting = .5,
                           ylabel = "Concentration",
                           xlabel = "Time",
@@ -154,48 +157,10 @@ acruiseR::plot_plumes(dm$co2, dm$time_nano, plumz_co2,
 #ggplotly()
 
 #areas
-areaz_co2 <-  acruiseR::integrate_aup_trapz(dm$co2, dm$time_nano, plumz_co2,
-                                        dx=1) 
+areaz_co2 <-  acruiseR::integrate_aup_trapz(dm$co2, dm$time_nano, plumz_co2, dx=1, uncertainty = 0.348, uncertainty_type = "absolute" ) 
 
 
 
-
-
-
-
-
-
-### CH4 ###
-
-#background 
-bg_ch4 <- identify_background(dm$ch4, method="gam", k=50)
-
-acruiseR::plot_background(dm$ch4, dm$time_nano, bg_ch4,  
-                          plume_sd_threshold = 3,
-                          plume_sd_starting = 0.5,
-                          ylabel = "Concentration",
-                          xlabel = "Time",
-                          date_fmt = "%H:%M",
-                          bg_alpha = 0.7) +
-  theme(legend.position = "none") 
-
-#plumes 
-plumz_ch4 <- acruiseR::detect_plumes(dm$ch4, bg_ch4, dm$time_nano,
-                                     plume_sd_threshold = 3,
-                                     plume_sd_starting = 0.5,
-                                     plume_buffer = 15,
-                                     refit=TRUE)
-
-
-acruiseR::plot_plumes(dm$ch4, dm$time_nano, plumz_ch4,
-                      ylabel = "Concentration",
-                      xlabel = "Time",
-                      date_fmt = "%H:%M",
-                      bg_alpha = 0.7) 
-
-#areas
-areaz_ch4 <-  acruiseR::integrate_aup_trapz(dm$ch4, dm$time_nano, plumz_ch4,
-                                            dx=1)
 
 
 
@@ -206,14 +171,94 @@ areaz_ch4 <-  acruiseR::integrate_aup_trapz(dm$ch4, dm$time_nano, plumz_ch4,
 
 areaz_so2$start <- as.POSIXct(areaz_so2$start)
 areaz_so2$end <- as.POSIXct(areaz_so2$end)
-write.csv(areaz_so2, "G:/My Drive/ACRUISE/Stuarts_integration/c190_so2.csv")
+write.csv(areaz_so2, "G:/My Drive/ACRUISE/Stuarts_integration/c180_so2.csv")
 
 
 areaz_co2$start <- as.POSIXct(areaz_co2$start)
 areaz_co2$end <- as.POSIXct(areaz_co2$end)
-write.csv(areaz_co2, "G:/My Drive/ACRUISE/Stuarts_integration/c190_co2.csv")
+write.csv(areaz_co2, "G:/My Drive/ACRUISE/Stuarts_integration/c180_co2.csv")
 
 
-areaz_ch4$start <- as.POSIXct(areaz_ch4$start)
-areaz_ch4$end <- as.POSIXct(areaz_ch4$end)
-write.csv(areaz_ch4, "G:/My Drive/ACRUISE/Stuarts_integration/c179_ch4.csv")
+
+
+#### plots
+
+
+
+
+
+dm <-  dm %>%
+  filter(between(date, 
+                 ymd_hms("2019-07-12 15:16:00"),
+                 ymd_hms("2019-07-12 16:06:00"))) # c182
+
+dm <-  dm %>%
+  filter(between(date, 
+                 ymd_hms("2019-07-12 15:16:00"),
+                 ymd_hms("2019-07-12 15:45:00"))) # c182
+
+
+
+#basic map
+data_map <-  dm #%>% na.omit() #pick data 
+bbox = c(min(data_map$lon-0.2),min(data_map$lat-0.1),max(data_map$lon+0.2),max(data_map$lat+0.1)) #pick area
+mymap = ggmap::get_stamenmap(bbox, zoom = 7) #pick zoom
+
+ggmap(mymap)+
+  geom_point(data = data_map, 
+             aes(x = lon,
+                 y = lat, 
+                 colour = so2)) +
+  scale_color_viridis(option="inferno", #limits=c(-10,150)
+  ) +
+  labs(title=bquote(''~SO[2]~ (ppb)*''))+
+  theme(plot.title = element_text(hjust = 0.5), 
+        text = element_text(size=14), 
+        legend.title = element_blank(), 
+        axis.title = element_blank()) +
+  guides(size = FALSE) 
+
+
+ggplot()+
+  geom_line(data = data_map, 
+            aes(x = date,
+                y = so2, 
+                colour = so2),
+            size=1) +
+  scale_color_viridis(option="inferno") +
+  labs(x="date", y=bquote(''~SO[2]~ (ppb)*''))+
+  theme_bw()+
+  theme(text = element_text(size=13), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        legend.title = element_blank())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

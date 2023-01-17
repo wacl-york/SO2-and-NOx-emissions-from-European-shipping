@@ -26,10 +26,10 @@ library(data.table)
 ### Initial setup ###
 
 #set working directory
-setwd("G:/My Drive/ACRUISE/ACRUISE2/data_raw")
+setwd("G:/My Drive/ACRUISE/ACRUISE3/data")
 
 #flight number
-fn <-  c("c249")
+fn <-  c("c292")
 
 #find and load files
 core_1_files <-  list.files("./core_1hz",pattern = ".nc") # core 1 Hz data
@@ -51,7 +51,7 @@ origin <-  paste0(origin, " 00:00")
 data_nc <-  ncdf4::nc_open(ncdf)
 
 #choose variables
-vars_nc <- c("U_C", "V_C", "W_C", "LAT_GIN", "LON_GIN","HGT_RADR", "WOW_IND")
+vars_nc <- c("U_C", "V_C", "W_C", "LAT_GIN", "LON_GIN","HGT_RADR", "WOW_IND", "SO2_TECO", "SO2_TECO_FLAG", "O3_2BTECH", "O3_2BTECH_FLAG")
 
 #turn NetCDF into data frame
 for (i in 1:length(vars_nc)) {
@@ -79,60 +79,84 @@ CORE_1Hz$date <- base::as.POSIXct(seq.POSIXt(from = min(date)+(1),
 rm(date, core_time, i, raw, vname, vars_nc)
 
 #flags core
-#CORE_1Hz$o3[CORE_1Hz$o3_flag != 0] <-  NA
-#CORE_1Hz$so2[CORE_1Hz$so2_flag != 0] <-  NA
-CORE_1Hz$CPC_CNTS[CORE_1Hz$CPC_CNTS_FLAG != 0] <- NA
+CORE_1Hz$O3_2BTECH[CORE_1Hz$O3_2BTECH_FLAG != 0] <-  NA
+CORE_1Hz$SO2_TECO[CORE_1Hz$SO2_TECO_FLAG != 0] <-  NA
+#CORE_1Hz$CPC_CNTS[CORE_1Hz$CPC_CNTS_FLAG != 0] <- NA
 #CORE_1Hz$co[CORE_1Hz$co_aero_flag != 0] <-  NA
 
 #trim to flight only by weight on wheels
 CORE_1Hz <- CORE_1Hz[!CORE_1Hz$WOW_IND != 0,]
 
 #save prelim
-saveRDS(CORE_1Hz, paste0("./core_for_stats/",fn,"_core_basic.RDS"))
+# saveRDS(CORE_1Hz, paste0("./core_for_stats/",fn,"_core_basic.RDS"))
+
+
+
+################################################################################
+### fgga ###
+
+#find and load files
+fgga_files <-  list.files("./fgga_r0",pattern = ".na") # fgga data
+
+#chose file
+fgga <- paste0("./fgga_r0/",fgga_files[grep(fn,fgga_files,ignore.case=TRUE)])
+
+
+#format file
+fgga <- read.delim(fgga, header=FALSE, sep=" ", skip=62)
+
+fgga <- fgga %>% dplyr::rename(date=V1,
+                               co2=V2,
+                               co2_flag=V3,
+                               ch4=V4,
+                               ch4_flag=V5,
+                               flow=V6)
+
+fgga$date <- strptime(x = origin, format ="%Y%m%d %H:%M") + (fgga$date)
 
 
 ################################################################################
 ### ICL, NOx and HCHO merge file ###
-
-#read
-dm1 <- read.csv(csv, stringsAsFactors = F)
-
-#format date
-dm1$date <-  as.POSIXct(dm1$date, tz="UTC")
-
-#extract variables and rename
-dm <-  subset(dm1, select=c(date, lat_gin, lon_gin, hgt_radr, v_c, u_c, w_c, cpc_cnts, cpc_cnts_flag, co_aero, co_aero_flag, co2, co2_flag, ch4, ch4_flag, no2_mr, no2_flag, no_mr, no_flag, ethane_icl, ethane_icl_flag, hcho_ppb)) %>% 
-  dplyr::rename(lat = lat_gin,
-                lon = lon_gin,
-                v = v_c,
-                u = u_c,
-                w = w_c,
-                cpc = cpc_cnts,
-                co = co_aero,
-                no2 = no2_mr,
-                no = no_mr,
-                ethane = ethane_icl,
-                hcho = hcho_ppb)
-
-
-
-### flagging and converting the data ###
-
-#make NOx, NOx ratio and convert NOx species to ppb
-dm$no <- dm$no*0.001
-dm$no2 <- dm$no2*0.001
-dm$nox <- (dm$no + dm$no2)
-dm$nox_rat <- dm$no2/dm$no
-
-#flags other
-dm$ch4[dm$ch4_flag !=0] <-  NA
-dm$co2[dm$co2_flag !=0] <- NA
-dm$ethane[dm$ethane_icl_flag !=0] <- NA
-dm$no[dm$no_flag !=0] <- NA
-dm$no2[dm$no2_flag !=0] <- NA
-dm$nox[dm$no2_flag !=0 | dm$no_flag !=0] <- NA
-dm$no2[dm$no2 <= 0] <-  NA
-dm$no[dm$no <= 0] <-  NA
+# 
+# #read
+# dm1 <- read.csv(csv, stringsAsFactors = F)
+# 
+# #format date
+# dm1$date <-  as.POSIXct(dm1$date, tz="UTC")
+# 
+# #extract variables and rename
+# dm <-  subset(dm1, select=c(date, lat_gin, lon_gin, hgt_radr, v_c, u_c, w_c, cpc_cnts, cpc_cnts_flag, co_aero, co_aero_flag, co2, co2_flag, ch4, ch4_flag, no2_mr, no2_flag, no_mr, no_flag, ethane_icl, ethane_icl_flag, hcho_ppb)) %>% 
+#   dplyr::rename(lat = lat_gin,
+#                 lon = lon_gin,
+#                 v = v_c,
+#                 u = u_c,
+#                 w = w_c,
+#                 cpc = cpc_cnts,
+#                 co = co_aero,
+#                 no2 = no2_mr,
+#                 no = no_mr,
+#                 ethane = ethane_icl,
+#                 hcho = hcho_ppb)
+# 
+# 
+# 
+# ### flagging and converting the data ###
+# 
+# #make NOx, NOx ratio and convert NOx species to ppb
+# dm$no <- dm$no*0.001
+# dm$no2 <- dm$no2*0.001
+# dm$nox <- (dm$no + dm$no2)
+# dm$nox_rat <- dm$no2/dm$no
+# 
+# #flags other
+# dm$ch4[dm$ch4_flag !=0] <-  NA
+# dm$co2[dm$co2_flag !=0] <- NA
+# dm$ethane[dm$ethane_icl_flag !=0] <- NA
+# dm$no[dm$no_flag !=0] <- NA
+# dm$no2[dm$no2_flag !=0] <- NA
+# dm$nox[dm$no2_flag !=0 | dm$no_flag !=0] <- NA
+# dm$no2[dm$no2 <= 0] <-  NA
+# dm$no[dm$no <= 0] <-  NA
 
 
 
@@ -140,10 +164,10 @@ dm$no[dm$no <= 0] <-  NA
 ### merge & save ###
 
 #put all together
-df <-  merge(dm, CORE_1Hz)
+df <-  merge(CORE_1Hz, fgga, all=TRUE)
 
 #export  
-saveRDS(df, paste0("./full_merge/",fn,"_all_data_r0.RDS"))
+saveRDS(df, paste0("./final_merge/",fn,"_all_data.RDS"))
 
 ################################################################################
 
