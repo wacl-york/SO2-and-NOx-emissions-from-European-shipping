@@ -26,29 +26,27 @@ setwd("G:/My Drive/ACRUISE/ACRUISE2/data_raw/final_merge/")
 acruise_files <-  list.files(pattern = ".RDS") 
 
 #flight number
-fn <- 265
+fn <- 263
 
-#chose file
-acruise <- paste0(acruise_files[grep(fn,acruise_files,ignore.case=TRUE)])
+# #chose file
+# acruise <- paste0(acruise_files[grep(fn,acruise_files,ignore.case=TRUE)])
+# 
+# 
+# core <-  readRDS(acruise[1])
+# core$date_char <- as.character(core$date)
+# core <- core[!is.na(core$date_char),]
+# core$time_nano <- as.nanotime(core$date_char, format="%Y-%m-%d %H:%M:%S", tz="UTC")
+# tz(core$date) <- "UTC"
+# 
+# 
+# fgga <- readRDS(acruise[2])
+# 
+# plot(core$date,core$SO2_TECO)
 
 
-core <-  readRDS(acruise[1])
-core$date_char <- as.character(core$date)
-core <- core[!is.na(core$date_char),]
-core$time_nano <- as.nanotime(core$date_char, format="%Y-%m-%d %H:%M:%S", tz="UTC")
-tz(core$date) <- "UTC"
-
-
-fgga <- readRDS(acruise[2])
-
-plot(core$date,core$SO2_TECO)
 
 
 
-dm <-  dm2 %>%
-  filter(between(date, 
-                 ymd_hms("2021-09-24 12:55:00"),
-                 ymd_hms("2021-09-24 14:25:00"))) # c251
 
 dm <-  dm2 %>%
   filter(between(date, 
@@ -91,44 +89,62 @@ dm <-  dm2 %>%
                  ymd_hms("2021-10-07 10:00:00"),
                  ymd_hms("2021-10-07 13:30:00"))) # c261
 
-
-dm <-  dm2 %>%
+### c262
+dmc <-  core %>%
   filter(between(date, 
                  ymd_hms("2021-10-08 12:40:00"),
-                 ymd_hms("2021-10-08 16:15:00"))) # c262
+                 ymd_hms("2021-10-08 16:15:00"))) 
 
-dm <-  dm2 %>%
+dmf <-  fgga %>%
+  filter(between(date, 
+                 as.nanotime("2021-10-08 12:40:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"),
+                 as.nanotime("2021-10-08 16:15:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"))) 
+
+### c263
+dmc <-  core %>%
   filter(between(date, 
                  ymd_hms("2021-10-09 11:00:00"),
-                 ymd_hms("2021-10-09 14:45:00"))) # c263
+                 ymd_hms("2021-10-09 14:45:00"))) 
+
+dmf <-  fgga %>%
+  filter(between(date, 
+                 as.nanotime("2021-10-09 11:00:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"),
+                 as.nanotime("2021-10-09 14:45:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"))) 
 
 
-dm <-  dm2 %>%
+#### c264
+dmc <-  core %>%
   filter(between(date, 
                  ymd_hms("2021-10-11 11:00:00"),
-                 ymd_hms("2021-10-11 14:00:00"))) # c264
+                 ymd_hms("2021-10-11 14:00:00"))) 
 
 
+dmf <-  fgga %>%
+  filter(between(date, 
+                 as.nanotime("2021-10-11 11:00:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"),
+                 as.nanotime("2021-10-11 14:00:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"))) 
+
+#### c265
 dmc <-  core %>%
   filter(between(date, 
                  ymd_hms("2021-10-12 12:10:00"),
-                 ymd_hms("2021-10-12 14:10:00"))) # c265
+                 ymd_hms("2021-10-12 14:10:00")))
 
 dmf <-  fgga %>%
   filter(between(date, 
                  as.nanotime("2021-10-12 12:10:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"),
-                 as.nanotime("2021-10-12 14:10:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"))) # c265
+                 as.nanotime("2021-10-12 14:10:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"))) 
 
 
 
 ### SO2 ###
 
 #background 
-bg_so2 <- identify_background(dmc$SO2_TECO, method="gam", k=10)
+bg_so2 <- identify_background(dmc$SO2_TECO, method="gam", k=50)
 
 acruiseR::plot_background(dmc$SO2_TECO, dmc$time_nano, bg_so2,  
-                          plume_sd_threshold = 3,
-                          plume_sd_starting = 0.5,
+                          plume_sd_threshold = 5,
+                          plume_sd_starting = 2,
                           ylabel = "Concentration",
                           xlabel = "Time",
                           date_fmt = "%H:%M",
@@ -140,8 +156,8 @@ acruiseR::plot_background(dmc$SO2_TECO, dmc$time_nano, bg_so2,
 
 #plumes 
 plumz_so2 <- acruiseR::detect_plumes(dmc$SO2_TECO, bg_so2, dmc$time_nano,
-                                     plume_sd_threshold = 3,
-                                     plume_sd_starting = 0.5,
+                                     plume_sd_threshold = 5,
+                                     plume_sd_starting = 2,
                                      plume_buffer = 15,
                                      refit = TRUE )
 
@@ -176,7 +192,7 @@ acruiseR::plot_background(dmf$co2, dmf$date, bg_co2,
                           bg_alpha = 0.9) +
   theme(legend.position = "none") #+ylim(410,430)
 
-ggplotly()
+#ggplotly()
 
 
 #plumes 
@@ -194,7 +210,7 @@ acruiseR::plot_plumes(dmf$co2, dmf$date, plumz_co2,
                       bg_alpha = 0.9)+
   theme(legend.position='none')# +ylim(407,412)
 
-ggplotly()
+#ggplotly()
 
 
 #areas

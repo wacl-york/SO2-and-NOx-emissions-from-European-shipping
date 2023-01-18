@@ -143,6 +143,151 @@ for(fn in c("c265","c264", "c263", "c262", "c261", "c260", "c259", "c258", "c257
 }
 
 
+################################################################################
+### 1 Hz file ###
+
+
+for(fn in c("c265","c264"
+            #, "c263", "c262", "c261", "c260", "c259", "c258", "c257", "c256", "c255", "c254", "c253"
+            )){
+  print(paste("now starting:",fn))
+  
+  # put processing code here
+  #find and load files
+  core_1_files <-  list.files("./core_1hz",pattern = ".nc") # core 1 Hz data
+  
+  #load files
+  ncdf <- paste0("./core_1hz/",core_1_files[grep(fn,core_1_files,ignore.case=TRUE)])
+  #csv <-  "./merged_data_v2.1/Merge_ ozone/c181_merge_ICL_HCHO_O3.csv"
+  
+  #get date
+  origin <- ncdf %>% map_chr(str_sub, start = -28, end = -21)
+  origin <-  paste0(origin, " 00:00")
+  
+  #open the ncdf
+  data_nc <-  ncdf4::nc_open(ncdf)
+  
+  #choose variables
+  vars_nc <- c("U_C", "V_C", "W_C", "LAT_GIN", "LON_GIN","HGT_RADR", "WOW_IND", "SO2_TECO", "SO2_TECO_FLAG", "O3_2BTECH", "O3_2BTECH_FLAG")
+  
+  #turn NetCDF into data frame
+  for (i in 1:length(vars_nc)) {
+    vname <- vars_nc[i]
+    raw <- as.vector(ncdf4::ncvar_get(data_nc,vname,collapse_degen=FALSE))
+    if(i==1){
+      CORE_1Hz <- data.frame(raw)
+      names(CORE_1Hz) <- vname
+    } 
+    else {
+      CORE_1Hz <- cbind(CORE_1Hz,raw)
+      names(CORE_1Hz)[ncol(CORE_1Hz)] <- vname
+    }
+  }
+  
+  #get time and adjust frequency 
+  core_time <- ncvar_get(data_nc, attributes(data_nc$dim)$names[1]) %>% as.vector()
+  date <- strptime(x = origin, format ="%Y%m%d %H:%M") + (core_time)
+  CORE_1Hz$date <- base::as.POSIXct(seq.POSIXt(from = min(date)+(1),
+                                               to = max(date)+1, 
+                                               by = 1),
+                                    tz = "UTC") 
+  
+  tz(CORE_1Hz$date) <- "UTC"
+  
+  #tidy up
+  rm(date, core_time, i, raw, vname, vars_nc)
+  
+  #flags core
+  CORE_1Hz$O3_2BTECH[CORE_1Hz$O3_2BTECH_FLAG != 0] <-  NA
+  CORE_1Hz$SO2_TECO[CORE_1Hz$SO2_TECO_FLAG != 0] <-  NA
+  
+  #trim to flight only by weight on wheels
+  CORE_1Hz <- CORE_1Hz[!CORE_1Hz$WOW_IND != 0,]
+  
+  
+  #find and load files
+  fgga_files <-  list.files("./fgga_r0",pattern = ".na") # fgga data
+  
+  #chose file
+  fgga_paths <- paste0("./fgga_r0/",fgga_files[grep(fn,fgga_files,ignore.case=TRUE)])
+  
+  #format file
+  fgga <- read.delim(fgga_paths, header=FALSE, sep=" ", skip=62) %>% 
+    dplyr::rename(date=V1,
+                  co2=V2,
+                  co2_flag=V3,
+                  ch4=V4,
+                  ch4_flag=V5,
+                  flow=V6) 
+  
+  fgga$date <- strptime(x = origin, format ="%Y%m%d %H:%M") + (fgga$date)
+  
+  fgga$co2[fgga$co2_flag != 0] <- NA
+  fgga$ch4[fgga$ch4_flag != 0] <- NA
+  
+  
+  df <-  merge(CORE_1Hz, fgga, all=FALSE)
+  
+  #save prelim
+  saveRDS(CORE_1Hz, paste0("./final_merge/",fn,"_all_1Hz_data.RDS"))
+  
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ################################################################################
 
