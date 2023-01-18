@@ -32,13 +32,18 @@ fn <- 265
 acruise <- paste0(acruise_files[grep(fn,acruise_files,ignore.case=TRUE)])
 
 
-dm2 <-  readRDS(acruise)
-dm2$date_char <- as.character(dm2$date)
-dm2 <- dm2[!is.na(dm2$date_char),]
-dm2$time_nano <- as.nanotime(dm2$date_char, format="%Y-%m-%d %H:%M:%S", tz="UTC")
-tz(dm2$date) <- "UTC"
+core <-  readRDS(acruise[1])
+core$date_char <- as.character(core$date)
+core <- core[!is.na(core$date_char),]
+core$time_nano <- as.nanotime(core$date_char, format="%Y-%m-%d %H:%M:%S", tz="UTC")
+tz(core$date) <- "UTC"
 
-plot(dm2$date,dm2$CO2_ppm)
+
+fgga <- readRDS(acruise[2])
+
+plot(core$date,core$SO2_TECO)
+
+
 
 dm <-  dm2 %>%
   filter(between(date, 
@@ -104,20 +109,24 @@ dm <-  dm2 %>%
                  ymd_hms("2021-10-11 14:00:00"))) # c264
 
 
-dm <-  dm2 %>%
+dmc <-  core %>%
   filter(between(date, 
                  ymd_hms("2021-10-12 12:10:00"),
                  ymd_hms("2021-10-12 14:10:00"))) # c265
 
+dmf <-  fgga %>%
+  filter(between(date, 
+                 as.nanotime("2021-10-12 12:10:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"),
+                 as.nanotime("2021-10-12 14:10:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"))) # c265
 
 
 
 ### SO2 ###
 
 #background 
-bg_so2 <- identify_background(dm$SO2_TECO, method="gam", k=10)
+bg_so2 <- identify_background(dmc$SO2_TECO, method="gam", k=10)
 
-acruiseR::plot_background(dm$SO2_TECO, dm$time_nano, bg_so2,  
+acruiseR::plot_background(dmc$SO2_TECO, dmc$time_nano, bg_so2,  
                           plume_sd_threshold = 3,
                           plume_sd_starting = 0.5,
                           ylabel = "Concentration",
@@ -126,18 +135,18 @@ acruiseR::plot_background(dm$SO2_TECO, dm$time_nano, bg_so2,
                           bg_alpha = 0.9) +
   theme(legend.position = "none") #+ ylim(-2,15) 
 
-ggplotly()
+#ggplotly()
 
 
 #plumes 
-plumz_so2 <- acruiseR::detect_plumes(dm$SO2_TECO, bg_so2, dm$time_nano,
+plumz_so2 <- acruiseR::detect_plumes(dmc$SO2_TECO, bg_so2, dmc$time_nano,
                                      plume_sd_threshold = 3,
                                      plume_sd_starting = 0.5,
                                      plume_buffer = 15,
                                      refit = TRUE )
 
 
-acruiseR::plot_plumes(dm$SO2_TECO, dm$time_nano, plumz_so2,
+acruiseR::plot_plumes(dmc$SO2_TECO, dmc$time_nano, plumz_so2,
                       ylabel = "Concentration",
                       xlabel = "Time",
                       date_fmt = "%H:%M",
@@ -146,7 +155,7 @@ acruiseR::plot_plumes(dm$SO2_TECO, dm$time_nano, plumz_so2,
 
 
 #areas
-areaz_so2 <-  acruiseR::integrate_aup_trapz(dm$SO2_TECO, dm$time_nano, plumz_so2, dx=1)
+areaz_so2 <-  acruiseR::integrate_aup_trapz(dmc$SO2_TECO, dmc$time_nano, plumz_so2, dx=1, uncertainty = 0.09, uncertainty_type = "relative")
 
 
 
@@ -155,10 +164,10 @@ areaz_so2 <-  acruiseR::integrate_aup_trapz(dm$SO2_TECO, dm$time_nano, plumz_so2
 ### CO2 ###
 
 #background 
-bg_co2 <- identify_background(dm$CO2_ppm, method="gam", k=50)
+bg_co2 <- identify_background(dmf$co2, method="gam", k=50)
 
 
-acruiseR::plot_background(dm$CO2_ppm, dm$time_nano, bg_co2,  
+acruiseR::plot_background(dmf$co2, dmf$date, bg_co2,  
                           plume_sd_threshold = 3,
                           plume_sd_starting = 0.5,
                           ylabel = "Concentration",
@@ -171,14 +180,14 @@ ggplotly()
 
 
 #plumes 
-plumz_co2 <- acruiseR::detect_plumes(dm$CO2_ppm, bg_co2, dm$time_nano,
+plumz_co2 <- acruiseR::detect_plumes(dmf$co2, bg_co2, dmf$date,
                                      plume_sd_threshold = 3,
                                      plume_sd_starting = 0.5,
                                      plume_buffer = 15,
                                      refit = TRUE)
 
 
-acruiseR::plot_plumes(dm$CO2_ppm, dm$time_nano, plumz_co2,
+acruiseR::plot_plumes(dmf$co2, dmf$date, plumz_co2,
                       ylabel = "Concentration",
                       xlabel = "Time",
                       date_fmt = "%H:%M",
@@ -189,60 +198,20 @@ ggplotly()
 
 
 #areas
-areaz_co2 <-  acruiseR::integrate_aup_trapz(dm$CO2_ppm, dm$time_nano, plumz_co2,
-                                            dx=1) 
-
-
-
-
-
-### CH4 ###
-
-#background 
-bg_ch4 <- identify_background(dm$CH4_ppm, method="gam", k=20)
-
-acruiseR::plot_background(dm$CH4_ppm, dm$time_nano, bg_ch4,  
-                          plume_sd_threshold = 3,
-                          plume_sd_starting = 1,
-                          ylabel = "Concentration",
-                          xlabel = "Time",
-                          date_fmt = "%H:%M",
-                          bg_alpha = 0.7) +
-  theme(legend.position = "none") 
-
-#plumes 
-plumz_ch4 <- acruiseR::detect_plumes(dm$CH4_ppm, bg_ch4, dm$time_nano,
-                                     plume_sd_threshold = 3,
-                                     plume_sd_starting = 1,
-                                     plume_buffer = 15,
-                                     refit=TRUE)
-
-
-acruiseR::plot_plumes(dm$CH4_ppm, dm$time_nano, plumz_ch4,
-                      ylabel = "Concentration",
-                      xlabel = "Time",
-                      date_fmt = "%H:%M",
-                      bg_alpha = 0.7) 
-
-#areas
-areaz_ch4 <-  acruiseR::integrate_aup_trapz(dm$CH4_ppm, dm$time_nano, plumz_ch4,
-                                            dx=1)
-
-
-
-
+areaz_co2 <-  acruiseR::integrate_aup_trapz(dmf$co2, dmf$date, plumz_co2, dx=1, uncertainty = 0.599, uncertainty_type = "absolute") 
 
 
 
 
 areaz_so2$start <- as.POSIXct(areaz_so2$start)
 areaz_so2$end <- as.POSIXct(areaz_so2$end)
-write.csv(areaz_so2, "G:/My Drive/ACRUISE/Stuarts_integration/c263_so2.csv")
+write.csv(areaz_so2, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_so2.csv"))
+
 
 
 areaz_co2$start <- as.POSIXct(areaz_co2$start)
 areaz_co2$end <- as.POSIXct(areaz_co2$end)
-write.csv(areaz_co2, "G:/My Drive/ACRUISE/Stuarts_integration/c263_co2.csv")
+write.csv(areaz_co2, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_co2.csv"))
 
 
 

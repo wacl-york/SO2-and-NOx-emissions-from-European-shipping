@@ -21,16 +21,23 @@ library(lubridate)
 library(viridis)
 library(waclr)
 library(data.table) 
+library(stringr)
 
 ################################################################################
 ### Initial setup ###
 
 #set working directory
-setwd("G:/My Drive/ACRUISE/ACRUISE3/data")
+setwd("G:/My Drive/ACRUISE/ACRUISE2/data_raw")
 
-#flight number
-fn <-  c("c292")
 
+################################################################################
+### NCDF file ###
+
+
+for(fn in c("c265","c264", "c263", "c262", "c261", "c260", "c259", "c258", "c257", "c256", "c255", "c254", "c253")){
+  print(paste("now starting:",fn))
+
+ # put processing code here
 #find and load files
 core_1_files <-  list.files("./core_1hz",pattern = ".nc") # core 1 Hz data
 
@@ -41,11 +48,6 @@ ncdf <- paste0("./core_1hz/",core_1_files[grep(fn,core_1_files,ignore.case=TRUE)
 #get date
 origin <- ncdf %>% map_chr(str_sub, start = -28, end = -21)
 origin <-  paste0(origin, " 00:00")
-
-
-
-################################################################################
-### NCDF file ###
 
 #open the ncdf
 data_nc <-  ncdf4::nc_open(ncdf)
@@ -71,9 +73,11 @@ for (i in 1:length(vars_nc)) {
 core_time <- ncvar_get(data_nc, attributes(data_nc$dim)$names[1]) %>% as.vector()
 date <- strptime(x = origin, format ="%Y%m%d %H:%M") + (core_time)
 CORE_1Hz$date <- base::as.POSIXct(seq.POSIXt(from = min(date)+(1),
-                                              to = max(date)+1, 
-                                              by = 1,
-                                              tz = "UTC"))
+                                             to = max(date)+1, 
+                                             by = 1),
+                                  tz = "UTC") 
+
+tz(CORE_1Hz$date) <- "UTC"
 
 #tidy up
 rm(date, core_time, i, raw, vname, vars_nc)
@@ -81,93 +85,64 @@ rm(date, core_time, i, raw, vname, vars_nc)
 #flags core
 CORE_1Hz$O3_2BTECH[CORE_1Hz$O3_2BTECH_FLAG != 0] <-  NA
 CORE_1Hz$SO2_TECO[CORE_1Hz$SO2_TECO_FLAG != 0] <-  NA
-#CORE_1Hz$CPC_CNTS[CORE_1Hz$CPC_CNTS_FLAG != 0] <- NA
-#CORE_1Hz$co[CORE_1Hz$co_aero_flag != 0] <-  NA
 
 #trim to flight only by weight on wheels
 CORE_1Hz <- CORE_1Hz[!CORE_1Hz$WOW_IND != 0,]
 
 #save prelim
-# saveRDS(CORE_1Hz, paste0("./core_for_stats/",fn,"_core_basic.RDS"))
+saveRDS(CORE_1Hz, paste0("./final_merge/",fn,"_core_data.RDS"))
+
+
+}
 
 
 
 ################################################################################
 ### fgga ###
 
-#find and load files
-fgga_files <-  list.files("./fgga_r0",pattern = ".na") # fgga data
 
-#chose file
-fgga <- paste0("./fgga_r0/",fgga_files[grep(fn,fgga_files,ignore.case=TRUE)])
-
-
-#format file
-fgga <- read.delim(fgga, header=FALSE, sep=" ", skip=62)
-
-fgga <- fgga %>% dplyr::rename(date=V1,
-                               co2=V2,
-                               co2_flag=V3,
-                               ch4=V4,
-                               ch4_flag=V5,
-                               flow=V6)
-
-fgga$date <- strptime(x = origin, format ="%Y%m%d %H:%M") + (fgga$date)
-
-
-################################################################################
-### ICL, NOx and HCHO merge file ###
-# 
-# #read
-# dm1 <- read.csv(csv, stringsAsFactors = F)
-# 
-# #format date
-# dm1$date <-  as.POSIXct(dm1$date, tz="UTC")
-# 
-# #extract variables and rename
-# dm <-  subset(dm1, select=c(date, lat_gin, lon_gin, hgt_radr, v_c, u_c, w_c, cpc_cnts, cpc_cnts_flag, co_aero, co_aero_flag, co2, co2_flag, ch4, ch4_flag, no2_mr, no2_flag, no_mr, no_flag, ethane_icl, ethane_icl_flag, hcho_ppb)) %>% 
-#   dplyr::rename(lat = lat_gin,
-#                 lon = lon_gin,
-#                 v = v_c,
-#                 u = u_c,
-#                 w = w_c,
-#                 cpc = cpc_cnts,
-#                 co = co_aero,
-#                 no2 = no2_mr,
-#                 no = no_mr,
-#                 ethane = ethane_icl,
-#                 hcho = hcho_ppb)
-# 
-# 
-# 
-# ### flagging and converting the data ###
-# 
-# #make NOx, NOx ratio and convert NOx species to ppb
-# dm$no <- dm$no*0.001
-# dm$no2 <- dm$no2*0.001
-# dm$nox <- (dm$no + dm$no2)
-# dm$nox_rat <- dm$no2/dm$no
-# 
-# #flags other
-# dm$ch4[dm$ch4_flag !=0] <-  NA
-# dm$co2[dm$co2_flag !=0] <- NA
-# dm$ethane[dm$ethane_icl_flag !=0] <- NA
-# dm$no[dm$no_flag !=0] <- NA
-# dm$no2[dm$no2_flag !=0] <- NA
-# dm$nox[dm$no2_flag !=0 | dm$no_flag !=0] <- NA
-# dm$no2[dm$no2 <= 0] <-  NA
-# dm$no[dm$no <= 0] <-  NA
+for(fn in c("c265","c264", "c263", "c262", "c261", "c260", "c259", "c258", "c257", "c256", "c255", "c254", "c253")){
+  print(paste("now starting:",fn))
+  
+  
+  #find and load files
+  fgga_files <-  list.files("./fgga_r0",pattern = ".na") # fgga data
+  
+  #chose file
+  fgga_paths <- paste0("./fgga_r0/",fgga_files[grep(fn,fgga_files,ignore.case=TRUE)])
+  
+  #get origin
+  core_1_files <-  list.files("./core_1hz",pattern = ".nc") # core 1 Hz data
+  ncdf <- paste0("./core_1hz/",core_1_files[grep(fn,core_1_files,ignore.case=TRUE)])
+  origin <- ncdf %>% map_chr(str_sub, start = -28, end = -21)
+  origin <-  paste0(origin, " 00:00")
+  
+  
+  #format file
+  fgga <- read.delim(fgga_paths, header=FALSE, sep=" ", skip=62) %>% 
+    dplyr::rename(seconds_since_midnight=V1,
+                  co2=V2,
+                  co2_flag=V3,
+                  ch4=V4,
+                  ch4_flag=V5,
+                  flow=V6) %>% 
+    tibble() %>% 
+    rowwise() %>% 
+    mutate(whole_secs = floor(seconds_since_midnight),
+           decimal_secs = as.character(round(seconds_since_midnight-whole_secs,1))) %>% 
+    ungroup() %>% 
+    mutate(decimal_secs = ifelse(decimal_secs == "0", ".0", str_remove(decimal_secs,"0")),
+           date = paste0(as.character(ymd_hm(origin)+whole_secs),decimal_secs) %>% 
+             as.nanotime(format = "%Y-%m-%d %H:%M:%E1S"))
+  
+  fgga$co2[fgga$co2_flag != 0] <- NA
+  fgga$ch4[fgga$ch4_flag != 0] <- NA
+  
+  saveRDS(fgga, paste0("./final_merge/",fn,"_fgga_10hz_data.RDS"))
+  
+}
 
 
-
-################################################################################
-### merge & save ###
-
-#put all together
-df <-  merge(CORE_1Hz, fgga, all=TRUE)
-
-#export  
-saveRDS(df, paste0("./final_merge/",fn,"_all_data.RDS"))
 
 ################################################################################
 
