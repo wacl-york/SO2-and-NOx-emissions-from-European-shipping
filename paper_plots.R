@@ -16,56 +16,92 @@ library(ggplot2)
 library(scales)
 
 
+
+##### ACRUISE-2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### ACRUISE-1
 dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-1_integration/ACRUISE-1_integration_uncert.csv",
                stringsAsFactors = F,
                header=T)
 
-dm <- dm %>% select(-c("X"))
+#dm <- dm %>% select(-c("X"))
 
 dm$SFC <- dm$SFC*100
-dm$Relative_unc <- dm$Relative_unc*100
-dm$Absolute_unc <- dm$Absolute_unc*100
+dm$Relative.unc <- dm$Relative.unc*100
+dm$Absolute.unc <- dm$Absolute.unc*100
 
 
 
 #dm$SFC <- label_percent()(dm$SFC)
 
 
-dm$newx = str_wrap(dm$Ship, width = 12)
-dm$pass_disc = as.factor(dm$Sea)
+dm$shipw = str_wrap(dm$Ship, width = 12)
+
+dm$typef = as.factor(dm$Type)
+dm$typef = str_wrap(dm$typef, width = 12)
+
+dm$seaf = as.factor(dm$Sea)
 
 
 
 ggplot(data=dm)+
-  geom_point(aes(x=newx, 
-                 y=SFC
-                 ,colour=pass_disc
-  ),
-  geom_errorbar(aes(x=newx,
+  geom_point(aes(x=typef,
+                 y=SFC,
+                 colour=Tonnage),
+             size=4)+
+  geom_errorbar(aes(x=typef,
                     y=SFC,
-                    #colour=Ship,
-                    ymin=SFC-Absolute_unc, 
-                    ymax=SFC+Absolute_unc),
-                alpha=0.7,
-                width=.2,
-                position=position_dodge(0.05))+
-  #shape=21,
-  #stroke=2,
-  size=4) +
+                    ymin=SFC-Absolute.unc,
+                    ymax=SFC+Absolute.unc),
+                width=0.1,
+                position = position_dodge(0.05))+
   #facet_wrap(~Flight, scales = "free")+
   theme_bw()+
   theme(text = element_text(size=13), 
-        #legend.title = element_blank(),
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)
-  )+
-  viridis::scale_fill_viridis(option="viridis", discrete=T) +
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  viridis::scale_colour_viridis(option="viridis", discrete=F) +
+  labs(x= "Type", y="SFC (%)", colour="Tonnage")#+
+  #guides(colour="none")
+
+
+
+ggplot(data=dm)+
+  geom_point(aes(x=Year,
+                 y=SFC),
+  size=4,
+  colour="grey")+
+  geom_errorbar(aes(x=Year,
+                    y=SFC,
+                    ymin=SFC-Absolute.unc,
+                    ymax=SFC+Absolute.unc),
+                width=0.3,
+                position = position_dodge(0.05))+
+  theme_bw()+
+  theme(text = element_text(size=13), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   viridis::scale_colour_viridis(option="viridis", discrete=T) +
-  labs(x= "Flight", y="SFC (%)", colour="Sea")#+
-#guides(colour="none")
-
-
-
-
+  labs(x= "Year", y="SFC (%)")
 
 
 
