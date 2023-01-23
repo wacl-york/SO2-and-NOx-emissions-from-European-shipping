@@ -16,6 +16,23 @@ library(acruiseR)
 library(nanotime)
 library(ggplot2)
 library(plotly)
+library(dplyr)
+library(ggmap)
+library(ggplot2)
+library(reshape2)
+library(grid)
+library(gridExtra)
+library(Rmisc)
+library(plotly)
+library(tidyverse)
+library(shonarrr)
+library(wsdmiscr)
+library(lubridate) 
+library(viridis)
+library(waclr)
+library(data.table) 
+library(stringr)
+
 
 
 # import and format
@@ -23,32 +40,32 @@ setwd("G:/My Drive/ACRUISE/ACRUISE2/data_raw/final_merge/")
 
 
 #find and load files
-acruise_files <-  list.files(pattern = ".RDS") 
+acruise_files <-  list.files(pattern = "RDS") 
 
 #flight number
-fn <- 263
+fn <- 261
 
-# #chose file
-# acruise <- paste0(acruise_files[grep(fn,acruise_files,ignore.case=TRUE)])
-# 
-# 
-# core <-  readRDS(acruise[1])
-# core$date_char <- as.character(core$date)
-# core <- core[!is.na(core$date_char),]
-# core$time_nano <- as.nanotime(core$date_char, format="%Y-%m-%d %H:%M:%S", tz="UTC")
-# tz(core$date) <- "UTC"
-# 
-# 
-# fgga <- readRDS(acruise[2])
-# 
-# plot(core$date,core$SO2_TECO)
+#chose file
+acruise <- paste0(acruise_files[grep(fn,acruise_files,ignore.case=TRUE)])
 
 
+core <-  readRDS(acruise[2])
+core$date_char <- as.character(core$date)
+core <- core[!is.na(core$date_char),]
+core$time_nano <- as.nanotime(core$date_char, format="%Y-%m-%d %H:%M:%S", tz="UTC")
+tz(core$date) <- "UTC"
+
+
+fgga <- readRDS(acruise[3])
+
+plot(core$date,core$co2)
 
 
 
 
-dm <-  dm2 %>%
+
+
+dmc <-  core %>%
   filter(between(date, 
                  ymd_hms("2021-09-27 14:15:00"),
                  ymd_hms("2021-09-27 16:30:00"))) # c253
@@ -84,10 +101,16 @@ dm <-  dm2 %>%
                  ymd_hms("2021-10-05 14:30:00"))) # c259
 
 
-dm <-  dm2 %>%
+### c261
+dmc <-  core %>%
   filter(between(date, 
                  ymd_hms("2021-10-07 10:00:00"),
-                 ymd_hms("2021-10-07 13:30:00"))) # c261
+                 ymd_hms("2021-10-07 13:30:00"))) 
+
+dmf <-  fgga %>%
+  filter(between(date, 
+                 as.nanotime("2021-10-07 10:00:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"),
+                 as.nanotime("2021-10-07 13:30:00", format="%Y-%m-%d %H:%M:%S", tz="UTC")))
 
 ### c262
 dmc <-  core %>%
@@ -140,11 +163,11 @@ dmf <-  fgga %>%
 ### SO2 ###
 
 #background 
-bg_so2 <- identify_background(dmc$SO2_TECO, method="gam", k=50)
+bg_so2 <- identify_background(dmc$SO2_TECO, method="gam", k=5)
 
 acruiseR::plot_background(dmc$SO2_TECO, dmc$time_nano, bg_so2,  
-                          plume_sd_threshold = 5,
-                          plume_sd_starting = 2,
+                          plume_sd_threshold = 1.5,
+                          plume_sd_starting = .5,
                           ylabel = "Concentration",
                           xlabel = "Time",
                           date_fmt = "%H:%M",
@@ -156,8 +179,8 @@ acruiseR::plot_background(dmc$SO2_TECO, dmc$time_nano, bg_so2,
 
 #plumes 
 plumz_so2 <- acruiseR::detect_plumes(dmc$SO2_TECO, bg_so2, dmc$time_nano,
-                                     plume_sd_threshold = 5,
-                                     plume_sd_starting = 2,
+                                     plume_sd_threshold = 1.5,
+                                     plume_sd_starting = .5,
                                      plume_buffer = 15,
                                      refit = TRUE )
 
@@ -180,11 +203,11 @@ areaz_so2 <-  acruiseR::integrate_aup_trapz(dmc$SO2_TECO, dmc$time_nano, plumz_s
 ### CO2 ###
 
 #background 
-bg_co2 <- identify_background(dmf$co2, method="gam", k=50)
+bg_co2 <- identify_background(dmf$co2, method="gam", k=20)
 
 
 acruiseR::plot_background(dmf$co2, dmf$date, bg_co2,  
-                          plume_sd_threshold = 3,
+                          plume_sd_threshold = 2,
                           plume_sd_starting = 0.5,
                           ylabel = "Concentration",
                           xlabel = "Time",
@@ -197,7 +220,7 @@ acruiseR::plot_background(dmf$co2, dmf$date, bg_co2,
 
 #plumes 
 plumz_co2 <- acruiseR::detect_plumes(dmf$co2, bg_co2, dmf$date,
-                                     plume_sd_threshold = 3,
+                                     plume_sd_threshold = 2,
                                      plume_sd_starting = 0.5,
                                      plume_buffer = 15,
                                      refit = TRUE)

@@ -37,6 +37,10 @@ dm$pass_disc = as.factor(dm$Sea)
 
 
 ggplot(data=dm)+
+  geom_point(aes(x=newx, 
+                 y=SFC
+                 ,colour=pass_disc
+  ),
   geom_errorbar(aes(x=newx,
                     y=SFC,
                     #colour=Ship,
@@ -45,10 +49,6 @@ ggplot(data=dm)+
                 alpha=0.7,
                 width=.2,
                 position=position_dodge(0.05))+
-  geom_point(aes(x=newx, 
-                 y=SFC
-                 ,colour=pass_disc
-  ),
   #shape=21,
   #stroke=2,
   size=4) +

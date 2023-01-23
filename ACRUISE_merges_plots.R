@@ -147,8 +147,7 @@ for(fn in c("c265","c264", "c263", "c262", "c261", "c260", "c259", "c258", "c257
 ### 1 Hz file ###
 
 
-for(fn in c("c265","c264"
-            #, "c263", "c262", "c261", "c260", "c259", "c258", "c257", "c256", "c255", "c254", "c253"
+for(fn in c("c265","c264", "c263", "c262", "c261", "c260", "c259", "c258", "c257", "c256", "c255", "c254", "c253"
             )){
   print(paste("now starting:",fn))
   
@@ -222,6 +221,7 @@ for(fn in c("c265","c264"
   
   fgga$date <- strptime(x = origin, format ="%Y%m%d %H:%M") + (fgga$date)
   
+  
   fgga$co2[fgga$co2_flag != 0] <- NA
   fgga$ch4[fgga$ch4_flag != 0] <- NA
   
@@ -229,7 +229,7 @@ for(fn in c("c265","c264"
   df <-  merge(CORE_1Hz, fgga, all=FALSE)
   
   #save prelim
-  saveRDS(CORE_1Hz, paste0("./final_merge/",fn,"_all_1Hz_data.RDS"))
+  saveRDS(df, paste0("./final_merge/",fn,"_all_1Hz_data.RDS"))
   
   
 }
