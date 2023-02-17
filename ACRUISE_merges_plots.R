@@ -27,15 +27,18 @@ library(stringr)
 ### Initial setup ###
 
 #set working directory
-setwd("G:/My Drive/ACRUISE/ACRUISE2/data_raw")
+setwd("G:/My Drive/ACRUISE/ACRUISE3/data")
 
 
 ################################################################################
 ### NCDF file ###
 
 
-for(fn in c("c265","c264", "c263", "c262", "c261", "c260", "c259", "c258", "c257", "c256", "c255", "c254", "c253")){
-  print(paste("now starting:",fn))
+# for(fn in c("c265","c264", "c263", "c262", "c261", "c260", "c259", "c258", "c257", "c256", "c255", "c254", "c253")){
+#   print(paste("now starting:",fn))
+  
+  for(fn in c("c284","c285", "c286", "c287", "c292")){
+    print(paste("now starting:",fn))
 
  # put processing code here
 #find and load files
@@ -90,7 +93,7 @@ CORE_1Hz$SO2_TECO[CORE_1Hz$SO2_TECO_FLAG != 0] <-  NA
 CORE_1Hz <- CORE_1Hz[!CORE_1Hz$WOW_IND != 0,]
 
 #save prelim
-saveRDS(CORE_1Hz, paste0("./final_merge/",fn,"_core_data.RDS"))
+saveRDS(CORE_1Hz, paste0("./core_rds/",fn,"_core_data.RDS"))
 
 
 }

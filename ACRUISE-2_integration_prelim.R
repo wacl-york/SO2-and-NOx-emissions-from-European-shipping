@@ -25,7 +25,7 @@ dm2$time_nano <- as.nanotime(dm2$date_char, format="%Y/%m/%d %H:%M:%E3S", tz="UT
 dm2$flight <- as.numeric(dm2$flight)
 
 
-fn <- 265
+fn <- 256
 dm <- dm2[dm2$flight==fn,] 
 plot(dm$date,dm$CO2_ppm)
 
@@ -106,14 +106,14 @@ dm <-  dm %>%
 #background 
 bg_so2 <- identify_background(dm$SO2_conc_scaled, method="gam", k=10)
 
-acruiseR::plot_background(dm$SO2_conc_scaled, dm$time_nano, bg_so2,  
+acruiseR::plot_background(dm$SO2_conc_scaled, dm$time_nano, bg_so2,
                           plume_sd_threshold = 3,
-                          plume_sd_starting = 0.5,
+                          plume_sd_starting = 1,
                           ylabel = "Concentration",
                           xlabel = "Time",
                           date_fmt = "%H:%M",
                           bg_alpha = 0.9) +
-  theme(legend.position = "none") #+ ylim(-2,15) 
+  theme(legend.position = "none") #+ ylim(-2,15)
 
 #ggplotly()
 
@@ -121,7 +121,7 @@ acruiseR::plot_background(dm$SO2_conc_scaled, dm$time_nano, bg_so2,
 #plumes 
 plumz_so2 <- acruiseR::detect_plumes(dm$SO2_conc_scaled, bg_so2, dm$time_nano,
                                      plume_sd_threshold = 3,
-                                     plume_sd_starting = 0.5,
+                                     plume_sd_starting = 2,
                                      plume_buffer = 15,
                                      refit = TRUE )
 
@@ -147,28 +147,29 @@ areaz_so2 <-  acruiseR::integrate_aup_trapz(dm$SO2_conc_scaled, dm$time_nano, pl
 ### CO2 ###
 
 #background 
-bg_co2 <- identify_background(dm$CO2_ppm, method="gam", k=50)
+bg_co2 <- identify_background(dm$CO2_ppm, method="gam", k=20)
 
 
-acruiseR::plot_background(dm$CO2_ppm, dm$time_nano, bg_co2,  
-                          plume_sd_threshold = 3.5,
-                          plume_sd_starting = 0.5,
-                          ylabel = "Concentration",
-                          xlabel = "Time",
-                          date_fmt = "%H:%M",
-                          bg_alpha = 0.9) +
-  theme(legend.position = "none") #+ylim(410,430)
+# acruiseR::plot_background(dm$CO2_ppm, dm$time_nano, bg_co2,  
+#                           plume_sd_threshold = 2,
+#                           plume_sd_starting = 0.5,
+#                           ylabel = "Concentration",
+#                           xlabel = "Time",
+#                           date_fmt = "%H:%M",
+#                           bg_alpha = 0.9) +
+#   theme(legend.position = "none") #+ylim(410,430)
 
 #ggplotly()
 
 
 #plumes 
 plumz_co2 <- acruiseR::detect_plumes(dm$CO2_ppm, bg_co2, dm$time_nano,
-                                     plume_sd_threshold = 3.5,
+                                     plume_sd_threshold = 3,
                                      plume_sd_starting = 0.5,
                                      plume_buffer = 15,
                                      refit = TRUE)
 
+dm$CO2_ppm <- dm$CO2_ppm - bg_co2$bg
 
 acruiseR::plot_plumes(dm$CO2_ppm, dm$time_nano, plumz_co2,
                       ylabel = "Concentration",
@@ -195,3 +196,45 @@ write.csv(areaz_so2, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_so2.
 areaz_co2$start <- as.POSIXct(areaz_co2$start)
 areaz_co2$end <- as.POSIXct(areaz_co2$end)
 write.csv(areaz_co2, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_co2.csv"))
+
+
+
+
+
+
+
+#############
+
+#compare wonky data
+
+
+dt.df_snap <- melt(dm, measure.vars = c("CO2_ppm", "SO2_conc_scaled"))
+
+levels(dt.df_snap$variable) <- c("CO[2] (ppm)", "SO[2] (ppb)")
+
+ggplot(data = dt.df_snap, 
+       aes(x = date, 
+           y = value)) +
+  geom_line(aes(color = variable),
+            size=1) +
+  scale_colour_manual(values=c("#440154","#de4968")) +
+  facet_grid(variable ~ ., 
+             scales = "free_y", 
+             labeller = label_parsed) +
+  theme_bw()+
+  theme(plot.title = element_text(hjust = 0.5), 
+        text = element_text(size=12), 
+        legend.position = "none", 
+        axis.title.x=element_blank(), 
+        axis.title.y=element_blank())
+
+ggplotly()
+
+
+
+ggplot(dm)+
+  geom_point(aes(x=LON_GIN,
+                 y=LAT_GIN,
+                 colour=SO2_conc_scaled))
+
+
