@@ -238,3 +238,85 @@ ggplot(dm)+
                  colour=SO2_conc_scaled))
 
 
+
+# plot so2, co2 and ch4 for appendix
+
+
+dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-2_integration/ACRUISE-2_integration_prelim_uncert.csv",
+               stringsAsFactors = F,
+               header=T)
+#dm <- dm %>% select(-c("X"))
+
+
+dm$SFC <- dm$SFC*100
+dm$Relative.unc <- dm$Relative.unc*100
+dm$Absolute.unc <- dm$Absolute.unc*100
+
+dm$seaf = as.factor(dm$Sea)
+
+dm$limit <- 0.5
+dm$limit[dm$Sea == "EC"] <- 0.1
+
+
+
+#fix time
+dm$co2_start <-  dmy_hms(dm$co2_start)
+dm$co2_end <-  dmy_hms(dm$co2_end)
+dm$so2_start <-  dmy_hms(dm$so2_start)
+dm$so2_end <-  dmy_hms(dm$so2_end)
+
+dm$co2_start <- dm$co2_start - lubridate::hours(1)
+dm$co2_end <- dm$co2_end - lubridate::hours(1)
+dm$so2_start <- dm$so2_start - lubridate::hours(1)
+dm$so2_end <- dm$so2_end - lubridate::hours(1)
+
+
+# obviousely can't make it work
+mydata <-  dm2
+df <- dm
+temp = mydata 
+for(i in 1:nrow(df)){
+  temp = temp %>% 
+    filter(!between(date, df$co2_start[i], df$co2_end[i]))
+}
+
+
+
+
+
+
+###
+
+dm2$CH4_ppb <-  dm2$CH4_ppm * 1000
+
+flight <- dm2 %>% 
+  filter(flight == 265)
+
+dt.df_snap <- melt(flight, measure.vars = c("CO2_ppm", "SO2_conc_scaled", "CH4_ppb"))
+
+levels(dt.df_snap$variable) <- c("CO[2] (ppm)", "SO[2] (ppb)", "CH[4] (ppb)")
+
+ggplot(data = dt.df_snap, 
+       aes(x = date, 
+           y = value)) +
+  geom_line(aes(color = variable),
+            size=1) +
+  scale_colour_manual(values=c("#440154","#de4968", "#7ad151")) +
+  facet_grid(variable ~ ., 
+             scales = "free_y", 
+             labeller = label_parsed) +
+  theme_bw()+
+  theme(plot.title = element_text(hjust = 0.5), 
+        text = element_text(size=14), 
+        legend.position = "none", 
+        axis.title.x=element_blank(), 
+        axis.title.y=element_blank())
+
+
+
+ggplotly()
+
+
+
+
+

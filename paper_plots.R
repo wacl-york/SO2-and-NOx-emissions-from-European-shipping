@@ -15,6 +15,154 @@ library(scales)
 
 
 
+
+##### ACRUISE-3
+dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-3_integration/ACRUISE-3_integration_uncert_1Hz.csv",
+               stringsAsFactors = F,
+               header=T)
+
+dm <-  dm[1:38,]
+
+dm$SFC <- dm$SFC*100
+dm$Relative.unc <- dm$Relative.unc*100
+dm$Absolute.unc <- dm$Absolute.unc*100
+
+
+
+dm$shipw = str_wrap(dm$Ship, width = 12)
+
+dm$typef = as.factor(dm$Type)
+dm$typef = str_wrap(dm$typef, width = 12)
+
+dm$seaf = as.factor(dm$Sea)
+
+dm$limit <- 0.5
+dm$limit[dm$Sea == "EC"] <- 0.1
+
+
+
+#SHIP AREA LIMIT
+ggplot(data=dm)+
+  geom_hline(aes(yintercept = limit))+
+  geom_point(aes(x=Ship,
+                 y=SFC,
+                 colour=seaf),
+             size=4)+
+  geom_errorbar(aes(x=Ship,
+                    y=SFC,
+                    ymin=SFC-Absolute.unc,
+                    ymax=SFC*1.06+Absolute.unc),
+                width=0.1,
+                position = position_dodge(0.05))+
+  facet_grid(~Sea, scales = "free", space="free_x")+
+  theme_bw()+
+  theme(text = element_text(size=14),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  viridis::scale_colour_viridis(option="viridis", discrete=T) +
+  labs(x= "Ship", y="SFC (%)", colour="Sea")+
+  guides(colour="none")
+
+
+
+
+#multiple peaks
+dm %>%
+  group_by(Ship) %>%
+  filter(n()>1) %>%
+  ggplot()+
+  geom_hline(aes(yintercept = limit))+
+  geom_point(aes(x=Ship,
+                 y=SFC,
+                 colour=seaf),
+             size=4)+
+  geom_errorbar(aes(x=Ship,
+                    y=SFC,
+                    ymin=SFC-Absolute.unc,
+                    ymax=SFC*1.06+Absolute.unc),
+                width=0.1,
+                position = position_dodge(0.05),
+                colour="grey")+
+  facet_grid(~Flight,
+             scales = "free_x",
+             space = "free_x")+
+  theme_bw()+
+  theme(text = element_text(size=16),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  scale_color_manual(values = c("AO" = "#3b528b",
+                                "BB"="#440154",
+                                "SW"="#fde725"))+
+  labs(x= "Ship", y="SFC (%)", colour="Sea")#+
+#guides(colour="none")
+
+
+
+#scrubber year
+dm %>%
+  ggplot()+
+  geom_point(aes(x=Year,
+                 y=SFC,
+                 colour=Scrubber),
+             size=4)+
+  geom_errorbar(aes(x=Year,
+                    y=SFC,
+                    ymin=SFC-Absolute.unc,
+                    ymax=SFC*1.06+Absolute.unc),
+                width=0.1,
+                position = position_dodge(0.05))+
+  #facet_wrap(~Flight, scales = "free")+
+  theme_bw()+
+  theme(text = element_text(size=14),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  viridis::scale_colour_viridis(option="viridis", discrete=T) +
+  labs(x= "Year", y="SFC (%)", colour="Scrubber")#+
+#guides(colour="none")
+
+
+#type tonnage
+dm %>%
+  ggplot()+
+  geom_point(aes(x=typef,
+                 y=SFC,
+                 colour=Tonnage),
+             size=4)+
+  geom_errorbar(aes(x=typef,
+                    y=SFC,
+                    ymin=SFC-Absolute.unc,
+                    ymax=SFC*1.06+Absolute.unc),
+                width=0.1,
+                position = position_dodge(0.05))+
+  #facet_wrap(~Flight, scales = "free")+
+  theme_bw()+
+  theme(text = element_text(size=14),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  viridis::scale_colour_viridis(option="viridis", discrete=F) +
+  labs(x= "Type", y="SFC (%)", colour="Tonnage")#+
+#guides(colour="none")
+
+
+
+
+
+#merge with lat lon
+latlon <- readRDS("G:/My Drive/ACRUISE/ACRUISE3/data/prelim_core/ACRUISE-3_merged_r0.RDS")
+
+tz(latlon$date) <- "UTC"
+
+dm$date <- dmy_hms(dm$co2_start)
+dm$date <- dm$date - lubridate::hours(1)
+dm_map <- left_join(dm, latlon, by="date", all.x=F)
+
+saveRDS(dm_map, "G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-3_integration/acruise3_sfcs_latlon_1Hz.RDS")
+write.csv(dm_map, "G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-3_integration/A3_sfcs_latlon_1Hz.csv")
+
+
+
+
+
+
+
+
+
 ##### ACRUISE-2
 dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-2_integration/ACRUISE-2_integration_just_anthem.csv",
                stringsAsFactors = F,

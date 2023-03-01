@@ -63,67 +63,88 @@ fgga <- readRDS(nafile)
 
 
 #peak task time
-
 ggplot()+
-  geom_point(aes(x=core$date, y=core$SO2_TECO))
+  geom_point(aes(x=dmc$LON_GIN, y=dmc$LAT_GIN, colour=dmc$HGT_RADR))
+
+
 
 ### c284
 dmc <-  core %>%
   filter(between(date, 
-                 ymd_hms("2021-10-08 12:40:00"),
-                 ymd_hms("2021-10-08 16:15:00"))) 
+                 ymd_hms("2022-04-29 12:20:00"),
+                 ymd_hms("2022-04-29 15:05:00"))) 
 
 dmf <-  fgga %>%
   filter(between(date, 
-                 as.nanotime("2021-10-08 12:40:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"),
-                 as.nanotime("2021-10-08 16:15:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"))) 
+                 as.nanotime("2022-04-29 12:20:00", 
+                             format="%Y-%m-%d %H:%M:%S", 
+                             tz="UTC"),
+                 as.nanotime("2022-04-29 15:05:00", 
+                             format="%Y-%m-%d %H:%M:%S", 
+                             tz="UTC"))) 
 
 ### c285
 dmc <-  core %>%
   filter(between(date, 
-                 ymd_hms("2021-10-09 11:00:00"),
-                 ymd_hms("2021-10-09 14:45:00"))) 
+                 ymd_hms("2022-04-30 12:30:00"),
+                 ymd_hms("2022-04-30 16:10:00"))) 
 
 dmf <-  fgga %>%
   filter(between(date, 
-                 as.nanotime("2021-10-09 11:00:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"),
-                 as.nanotime("2021-10-09 14:45:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"))) 
+                 as.nanotime("2022-04-30 12:30:00", 
+                             format="%Y-%m-%d %H:%M:%S", 
+                             tz="UTC"),
+                 as.nanotime("2022-04-30 16:10:00", 
+                             format="%Y-%m-%d %H:%M:%S", 
+                             tz="UTC"))) 
 
 
 #### c286
 dmc <-  core %>%
   filter(between(date, 
-                 ymd_hms("2021-10-11 11:00:00"),
-                 ymd_hms("2021-10-11 14:00:00"))) 
+                 ymd_hms("2022-05-01 12:15:00"),
+                 ymd_hms("2022-05-01 15:20:00"))) 
 
 
 dmf <-  fgga %>%
   filter(between(date, 
-                 as.nanotime("2021-10-11 11:00:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"),
-                 as.nanotime("2021-10-11 14:00:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"))) 
+                 as.nanotime("2022-05-01 12:15:00", 
+                             format="%Y-%m-%d %H:%M:%S", 
+                             tz="UTC"),
+                 as.nanotime("2022-05-01 15:20:00", 
+                             format="%Y-%m-%d %H:%M:%S", 
+                             tz="UTC"))) 
 
 #### c287
 dmc <-  core %>%
   filter(between(date, 
-                 ymd_hms("2021-10-12 12:10:00"),
-                 ymd_hms("2021-10-12 14:10:00")))
+                 ymd_hms("2022-05-02 12:10:00"),
+                 ymd_hms("2022-05-02 15:40:00")))
 
 dmf <-  fgga %>%
   filter(between(date, 
-                 as.nanotime("2021-10-12 12:10:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"),
-                 as.nanotime("2021-10-12 14:10:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"))) 
+                 as.nanotime("2022-05-02 12:10:00", 
+                             format="%Y-%m-%d %H:%M:%S", 
+                             tz="UTC"),
+                 as.nanotime("2022-05-02 15:40:00", 
+                             format="%Y-%m-%d %H:%M:%S", 
+                             tz="UTC"))) 
 
 
 ### c292
 dmc <-  core %>%
   filter(between(date, 
-                 ymd_hms("2021-10-07 10:00:00"),
-                 ymd_hms("2021-10-07 13:30:00"))) 
+                 ymd_hms("2022-05-07 15:25:00"),
+                 ymd_hms("2022-05-07 16:10:00"))) 
 
 dmf <-  fgga %>%
   filter(between(date, 
-                 as.nanotime("2021-10-07 10:00:00", format="%Y-%m-%d %H:%M:%S", tz="UTC"),
-                 as.nanotime("2021-10-07 13:30:00", format="%Y-%m-%d %H:%M:%S", tz="UTC")))
+                 as.nanotime("2022-05-07 15:25:00", 
+                             format="%Y-%m-%d %H:%M:%S", 
+                             tz="UTC"),
+                 as.nanotime("2022-05-07 16:10:00", 
+                             format="%Y-%m-%d %H:%M:%S", 
+                             tz="UTC")))
 
 
 
@@ -138,8 +159,8 @@ dmf <-  fgga %>%
 bg_so2 <- identify_background(dmc$SO2_TECO, method="gam", k=5)
 
 acruiseR::plot_background(dmc$SO2_TECO, dmc$time_nano, bg_so2,  
-                          plume_sd_threshold = 1.5,
-                          plume_sd_starting = .5,
+                          plume_sd_threshold = 2,
+                          plume_sd_starting = 0.5,
                           ylabel = "Concentration",
                           xlabel = "Time",
                           date_fmt = "%H:%M",
@@ -151,7 +172,7 @@ acruiseR::plot_background(dmc$SO2_TECO, dmc$time_nano, bg_so2,
 
 #plumes 
 plumz_so2 <- acruiseR::detect_plumes(dmc$SO2_TECO, bg_so2, dmc$time_nano,
-                                     plume_sd_threshold = 1.5,
+                                     plume_sd_threshold = 2,
                                      plume_sd_starting = .5,
                                      plume_buffer = 15,
                                      refit = TRUE )
@@ -164,9 +185,10 @@ acruiseR::plot_plumes(dmc$SO2_TECO, dmc$time_nano, plumz_so2,
                       bg_alpha = 0.9)+
   theme(legend.position='none')#+ ylim(-2,10)
 
+ggplotly()
 
 #areas
-areaz_so2 <-  acruiseR::integrate_aup_trapz(dmc$SO2_TECO, dmc$time_nano, plumz_so2, dx=1, uncertainty = 0.09, uncertainty_type = "relative")
+areaz_so2 <-  acruiseR::integrate_aup_trapz(dmc$SO2_TECO, dmc$time_nano, plumz_so2, dx=1, uncertainty = 0.06, uncertainty_type = "relative")
 
 
 
@@ -174,12 +196,26 @@ areaz_so2 <-  acruiseR::integrate_aup_trapz(dmc$SO2_TECO, dmc$time_nano, plumz_s
 
 ### CO2 ###
 
+#make 1 Hz
+orgin <- as.character(core$date[1])
+orgin <- paste0(substr(orgin, 1, 10), " 00:00:00")
+dmf$date <- ymd_hms(orgin) + dmf$seconds_since_midnight
+#dmf <- openair::timeAverage(dmf, avg.time = "sec")
+
+dmf$date_char <- as.character(dmf$date)
+dmf <- dmf[!is.na(dmf$date_char),]
+dmf$time_nano <- as.nanotime(dmf$date_char, format="%Y-%m-%d %H:%M:%S", tz="UTC")
+tz(dmf$date) <- "UTC"
+
+#dmf$time_nano <- dmf$date
+
+
 #background 
-bg_co2 <- identify_background(dmf$co2, method="gam", k=20)
+bg_co2 <- identify_background(dmf$co2, method="gam", k=50)
 
 
-acruiseR::plot_background(dmf$co2, dmf$date, bg_co2,  
-                          plume_sd_threshold = 2,
+acruiseR::plot_background(dmf$co2, dmf$time_nano, bg_co2,  
+                          plume_sd_threshold = 3,
                           plume_sd_starting = 0.5,
                           ylabel = "Concentration",
                           xlabel = "Time",
@@ -191,14 +227,14 @@ acruiseR::plot_background(dmf$co2, dmf$date, bg_co2,
 
 
 #plumes 
-plumz_co2 <- acruiseR::detect_plumes(dmf$co2, bg_co2, dmf$date,
-                                     plume_sd_threshold = 2,
+plumz_co2 <- acruiseR::detect_plumes(dmf$co2, bg_co2, dmf$time_nano,
+                                     plume_sd_threshold = 3,
                                      plume_sd_starting = 0.5,
                                      plume_buffer = 15,
                                      refit = TRUE)
 
 
-acruiseR::plot_plumes(dmf$co2, dmf$date, plumz_co2,
+acruiseR::plot_plumes(dmf$co2, dmf$time_nano, plumz_co2,
                       ylabel = "Concentration",
                       xlabel = "Time",
                       date_fmt = "%H:%M",
@@ -209,7 +245,7 @@ acruiseR::plot_plumes(dmf$co2, dmf$date, plumz_co2,
 
 
 #areas
-areaz_co2 <-  acruiseR::integrate_aup_trapz(dmf$co2, dmf$date, plumz_co2, dx=1, uncertainty = 0.599, uncertainty_type = "absolute") 
+areaz_co2 <-  acruiseR::integrate_aup_trapz(dmf$co2, dmf$time_nano, plumz_co2, dx=5, uncertainty = 0.574, uncertainty_type = "absolute") 
 
 
 
@@ -222,7 +258,7 @@ write.csv(areaz_so2, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_so2.
 
 areaz_co2$start <- as.POSIXct(areaz_co2$start)
 areaz_co2$end <- as.POSIXct(areaz_co2$end)
-write.csv(areaz_co2, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_co2.csv"))
+write.csv(areaz_co2, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_co2_5Hz.csv"))
 
 
 
@@ -305,5 +341,80 @@ ggplot()+
   )+
   labs(x= "Time", y=bquote(''~SO[2]~(ppb)~''))#+
 #guides(colour="none")
+
+
+
+
+
+########################
+# plot so2, co2 and ch4 for appendix
+
+# choose flight 
+fn <- 292
+
+#choose files
+acruise <- paste0("./core_rds/",acruise_files[grep(fn,acruise_files,ignore.case=TRUE)])
+nafile <- paste0("./fgga_rds/",na_files[grep(fn,na_files,ignore.case=TRUE)])
+
+# core load and sort the date
+core <-  readRDS(acruise)
+tz(core$date) <- "UTC"
+
+#fgga load
+dmf <- readRDS(nafile)
+
+#average fgga
+orgin <- as.character(core$date[1])
+orgin <- paste0(substr(orgin, 1, 10), " 00:00:00")
+
+dmf$date <- ymd_hms(orgin) + dmf$seconds_since_midnight
+dmf <- openair::timeAverage(dmf, avg.time = "sec")
+dmf$date_char <- as.character(dmf$date)
+dmf <- dmf[!is.na(dmf$date_char),]
+dmf$time_nano <- as.nanotime(dmf$date_char, format="%Y-%m-%d %H:%M:%S", tz="UTC")
+tz(dmf$date) <- "UTC"
+
+
+# drop unnecessary and match date
+dmf <- subset(dmf, select=c(date, co2, ch4))
+core <- subset(core, select=c(date, SO2_TECO))
+
+#merge
+dm2 <- left_join(core, dmf, keep=FALSE)
+
+
+
+###
+
+
+flight <- dm2
+
+dt.df_snap <- melt(flight, measure.vars = c("co2", "SO2_TECO", "ch4"))
+
+levels(dt.df_snap$variable) <- c("CO[2] (ppm)", "SO[2] (ppb)", "CH[4] (ppb)")
+
+ggplot(data = dt.df_snap, 
+       aes(x = date, 
+           y = value)) +
+  geom_line(aes(color = variable),
+            size=1) +
+  scale_colour_manual(values=c("#440154","#de4968", "#7ad151")) +
+  facet_grid(variable ~ ., 
+             scales = "free_y", 
+             labeller = label_parsed) +
+  theme_bw()+
+  theme(plot.title = element_text(hjust = 0.5), 
+        text = element_text(size=14), 
+        legend.position = "none", 
+        axis.title.x=element_blank(), 
+        axis.title.y=element_blank())
+
+
+
+ggplotly()
+
+
+
+
 
 

@@ -19,7 +19,7 @@ library(plotly)
 
 
 # import and format
-dm <-  read.csv("G:/My Drive/ACRUISE/ACRUISE1/merged/c180_merge.csv",
+dm <-  read.csv("G:/My Drive/ACRUISE/ACRUISE1/merged/c179_merge.csv",
                 header = T,
                 stringsAsFactors = F)
 dm$time_nano <- as.nanotime(dm$date, format="%d/%m/%Y %H:%M:%E3S", tz="UTC")
@@ -57,6 +57,8 @@ dm <-  dm %>%
                  ymd_hms("2019-07-13 17:10:00"))) # c183
 
 dm$co2[dm$co2 > 800] <- NA
+
+dm$ch4[dm$ch4 > 8000] <- NA
 
 
 dm <-  dm %>%
@@ -235,7 +237,40 @@ ggplot()+
 
 
 
+#####################
 
+dm <-  read.csv("G:/My Drive/ACRUISE/ACRUISE1/merged/c191_merge.csv",
+                header = T,
+                stringsAsFactors = F)
+
+dm$date <- as.POSIXct(dm$date, tz="UTC")
+dm2 <- subset(dm, !is.na(co2_flag))
+
+
+
+dt.df_snap <- melt(dm2, measure.vars = c("co2", "so2", "ch4"))
+
+levels(dt.df_snap$variable) <- c("CO[2] (ppm)", "SO[2] (ppb)", "CH[4] (ppb)")
+
+ggplot(data = dt.df_snap, 
+       aes(x = date, 
+           y = value)) +
+  geom_line(aes(color = variable),
+            size=1) +
+  scale_colour_manual(values=c("#440154","#de4968", "#7ad151")) +
+  facet_grid(variable ~ ., 
+             scales = "free_y", 
+             labeller = label_parsed) +
+  theme_bw()+
+  theme(plot.title = element_text(hjust = 0.5), 
+        text = element_text(size=14), 
+        legend.position = "none", 
+        axis.title.x=element_blank(), 
+        axis.title.y=element_blank())
+
+
+
+#ggplotly()
 
 
 
