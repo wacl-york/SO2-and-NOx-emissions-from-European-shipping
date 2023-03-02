@@ -201,6 +201,10 @@ orgin <- as.character(core$date[1])
 orgin <- paste0(substr(orgin, 1, 10), " 00:00:00")
 dmf$date <- ymd_hms(orgin) + dmf$seconds_since_midnight
 #dmf <- openair::timeAverage(dmf, avg.time = "sec")
+df %>%
+  mutate(date = round_date(date, unit = "0.2s")) %>%
+  group_by(date) %>%
+  summarise_all(mean, na.rm = T)
 
 dmf$date_char <- as.character(dmf$date)
 dmf <- dmf[!is.na(dmf$date_char),]
