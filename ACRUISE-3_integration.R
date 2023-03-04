@@ -44,7 +44,7 @@ acruise_files <-  list.files("./core_rds/", pattern = "RDS")
 na_files <-  list.files("./fgga_rds/", pattern = "RDS") 
 
 # choose flight 
-fn <- 284
+fn <- 292
 
 #choose files
 acruise <- paste0("./core_rds/",acruise_files[grep(fn,acruise_files,ignore.case=TRUE)])
@@ -156,10 +156,10 @@ dmf <-  fgga %>%
 ### SO2 ###
 
 #background 
-bg_so2 <- identify_background(dmc$SO2_TECO, method="gam", k=5)
+bg_so2 <- identify_background(dmc$SO2_ppb, method="gam", k=5)
 
-acruiseR::plot_background(dmc$SO2_TECO, dmc$time_nano, bg_so2,  
-                          plume_sd_threshold = 2,
+acruiseR::plot_background(dmc$SO2_ppb, dmc$time_nano, bg_so2,  
+                          plume_sd_threshold = 3,
                           plume_sd_starting = 0.5,
                           ylabel = "Concentration",
                           xlabel = "Time",
@@ -171,14 +171,14 @@ acruiseR::plot_background(dmc$SO2_TECO, dmc$time_nano, bg_so2,
 
 
 #plumes 
-plumz_so2 <- acruiseR::detect_plumes(dmc$SO2_TECO, bg_so2, dmc$time_nano,
+plumz_so2 <- acruiseR::detect_plumes(dmc$SO2_ppb, bg_so2, dmc$time_nano,
                                      plume_sd_threshold = 2,
                                      plume_sd_starting = .5,
                                      plume_buffer = 15,
                                      refit = TRUE )
 
 
-acruiseR::plot_plumes(dmc$SO2_TECO, dmc$time_nano, plumz_so2,
+acruiseR::plot_plumes(dmc$SO2_ppb, dmc$time_nano, plumz_so2,
                       ylabel = "Concentration",
                       xlabel = "Time",
                       date_fmt = "%H:%M",
@@ -188,10 +188,10 @@ acruiseR::plot_plumes(dmc$SO2_TECO, dmc$time_nano, plumz_so2,
 ggplotly()
 
 #areas
-areaz_so2 <-  acruiseR::integrate_aup_trapz(dmc$SO2_TECO, dmc$time_nano, plumz_so2, dx=1, uncertainty = 0.06, uncertainty_type = "relative")
+areaz_so2 <-  acruiseR::integrate_aup_trapz(dmc$SO2_ppb, dmc$time_nano, plumz_so2, dx=0.2, uncertainty = 0.3, uncertainty_type = "absolute")
 
 
-
+fn <- 286
 
 
 ### CO2 ###
@@ -201,10 +201,10 @@ orgin <- as.character(core$date[1])
 orgin <- paste0(substr(orgin, 1, 10), " 00:00:00")
 dmf$date <- ymd_hms(orgin) + dmf$seconds_since_midnight
 
-dmf %>%
-  mutate(date = round_date(date, unit = "0.2s")) %>%
-  group_by(date) %>%
-  summarise_all(mean, na.rm = T)
+# dmf <- dmf %>%
+#   mutate(date = round_date(date, unit = "0.25s")) %>%
+#   group_by(date) %>%
+#   summarise_all(mean, na.rm = T)
 
 dmf$date_char <- as.character(dmf$date)
 dmf <- dmf[!is.na(dmf$date_char),]
@@ -215,7 +215,7 @@ tz(dmf$date) <- "UTC"
 
 
 #background 
-bg_co2 <- identify_background(dmf$co2, method="gam", k=50)
+bg_co2 <- identify_background(dmf$co2, method="gam", k=20)
 
 
 acruiseR::plot_background(dmf$co2, dmf$time_nano, bg_co2,  
@@ -249,20 +249,20 @@ acruiseR::plot_plumes(dmf$co2, dmf$time_nano, plumz_co2,
 
 
 #areas
-areaz_co2 <-  acruiseR::integrate_aup_trapz(dmf$co2, dmf$time_nano, plumz_co2, dx=5, uncertainty = 0.574, uncertainty_type = "absolute") 
+areaz_co2 <-  acruiseR::integrate_aup_trapz(dmf$co2, dmf$time_nano, plumz_co2, dx=0.1, uncertainty = 0.574, uncertainty_type = "absolute") 
 
 
 
 
 areaz_so2$start <- as.POSIXct(areaz_so2$start)
 areaz_so2$end <- as.POSIXct(areaz_so2$end)
-write.csv(areaz_so2, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_so2.csv"))
+write.csv(areaz_so2, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_so2_lif.csv"))
 
 
 
 areaz_co2$start <- as.POSIXct(areaz_co2$start)
 areaz_co2$end <- as.POSIXct(areaz_co2$end)
-write.csv(areaz_co2, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_co2_5Hz.csv"))
+write.csv(areaz_co2, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_co2_10Hz.csv"))
 
 
 
@@ -273,15 +273,21 @@ write.csv(areaz_co2, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_co2_
 
 
 
+#############################
+
+#read cims
+
+fgga <- read.csv("G:/My Drive/ACRUISE/so2_comparison/ACSIS7_SO2_4Hz.csv", header = T, stringsAsFactors = F)
+fgga$SO2_ppb <- fgga$SO2_ppt/1000
+fgga$time_nano <- as.nanotime(fgga$date_time, format="%d/%m/%Y %H:%M:%E1S", tz="UTC")
+fgga$date <- fgga$time_nano
 
 
-
-
-
-
-
-
-
+#read lif
+fgga <- read.delim("G:/My Drive/ACRUISE/so2_comparison/reso2datafromacruise3/SO2_mr_5Hz_C286.txt", header = T, sep=",")
+fgga$SO2_ppb <- fgga$SO2_mr/1000
+fgga$time_nano <- as.nanotime(fgga$Date_time, format="%Y-%m-%d %H:%M:%E3S", tz="UTC")
+fgga$date <- fgga$time_nano
 
 
 ########################

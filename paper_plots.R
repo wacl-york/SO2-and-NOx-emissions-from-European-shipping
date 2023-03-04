@@ -12,12 +12,13 @@ library(ggnewscale)
 library(measurements)
 library(ggplot2)
 library(scales)
+library(praise)
 
 
 
 
 ##### ACRUISE-3
-dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-3_integration/ACRUISE-3_integration_uncert_1Hz.csv",
+dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-3_integration/ACRUISE-3_integration_uncert_freqs.csv",
                stringsAsFactors = F,
                header=T)
 
@@ -154,6 +155,50 @@ dm_map <- left_join(dm, latlon, by="date", all.x=F)
 
 saveRDS(dm_map, "G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-3_integration/acruise3_sfcs_latlon_1Hz.RDS")
 write.csv(dm_map, "G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-3_integration/A3_sfcs_latlon_1Hz.csv")
+
+
+
+
+#frequency comparison
+
+dm$num <- 1:38
+
+ 
+
+dm %>%
+  filter(!is.na(SFC_5hz))%>%
+  ggplot()+
+  geom_point(aes(x=num,
+                 y=SFC_1hz*100),
+             size=4,
+             colour="maroon",
+             alpha=0.5)+
+  geom_errorbar(aes(x=num,
+                    y=SFC_1hz*100,
+                    ymin=SFC_1hz*100-SFC_1hz_abs*100,
+                    ymax=SFC_1hz*100*1.06+SFC_1hz_abs*100),
+                width=0.1,
+                position = position_dodge(0.05))+
+  geom_point(aes(x=num,
+                 y=SFC_5hz*100),
+             size=4,
+             colour="blue",
+             alpha=0.5)+
+  geom_errorbar(aes(x=num,
+                    y=SFC_5hz*100,
+                    ymin=SFC_5hz*100-SFC_5hz_abs*100,
+                    ymax=SFC_5hz*100*1.06+SFC_5hz_abs*100),
+                width=0.1,
+                position = position_dodge(0.05))+
+  #facet_wrap(~Flight, scales = "free")+
+  theme_bw()+
+  theme(text = element_text(size=14),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  viridis::scale_colour_viridis(option="viridis", discrete=F) +
+  labs(x= "Number ", y="SFC (%)")#+
+#guides(colour="none")
+
+
 
 
 
@@ -516,29 +561,80 @@ ggplot(data = dm,
 
 
 # so2/co2 against lon - read data from integration script
-dm2 %>%
+
+def.pol.cart <- function(cart){
+  az <- (atan2(cart[,2],cart[,1])*180/pi)+180
+  return(az)
+}
+
+dm3 <-  dm2 %>%
+  mutate(wdir = def.pol.cart(matrix(c(V_C,U_C),ncol = 2)))
+
+dm <- dm3 %>%
   filter(HGT_RADR < 500) %>%
-  filter(flight == 263) %>%
+  openair::timeAverage(avg.time = "min")
+#filter(flight == 263) %>%
+
+dm$wind_flag[dm$wdir >315 | dm$wdir < 45] <- "N"
+dm$wind_flag[dm$wdir >= 45 & dm$wdir <= 135] <- "E"
+dm$wind_flag[dm$wdir >135 & dm$wdir < 225] <- "S"
+dm$wind_flag[dm$wdir >= 225 & dm$wdir <= 315] <- "W"
+
+
+
+
+  
+dm %>%  
+  filter(CO2_ppm <440) %>%
   ggplot()+
   geom_point(aes(x=LON_GIN,
-                 y=CO2_ppm))+
+                 y=CO2_ppm,
+                 colour=wind_flag),
+             size=4,
+             alpha=0.8)+
   theme_bw()+
+  scale_color_manual(values = c("E" = "#21918c",
+                                "W" = "#5ec962",
+                                "N"="#482576",
+                                "S"="#fc8961"))+
   theme(text = element_text(size=14),
         axis.text.x = element_text(vjust = 0.5, hjust=1))+
-  labs(y=bquote(''~CO[2]~(ppb)*''), x="Longitude")
+  labs(y=bquote(''~CO[2]~(ppm)*''), x="Longitude", colour="Wind")
+
+
+dm %>%  
+  ggplot()+
+  geom_point(aes(x=LON_GIN,
+                 y=SO2_conc_scaled,
+                 colour=wind_flag),
+             size=4,
+             alpha=0.8)+
+  theme_bw()+
+  scale_color_manual(values = c("E" = "#21918c",
+                                "W" = "#5ec962",
+                                "N"="#482576",
+                                "S"="#fc8961"))+
+  theme(text = element_text(size=14),
+        axis.text.x = element_text(vjust = 0.5, hjust=1))+
+  labs(y=bquote(''~SO[2]~(ppb)*''), x="Longitude", colour="Wind")
+
+
+#
 
 
 
+#a3 merge
 
+dm2 <- bind_rows(c284_core_data,c285_core_data,c286_core_data,c287_core_data)
+tz(dm2$date)
 
+fgga <- bind_rows(c284_fgga_10hz_data, c285_fgga_10hz_data, c286_fgga_10hz_data, c287_fgga_10hz_data)
+fgga$date <- as.POSIXct(fgga$date)
+tz(fgga$date) <- "UTC"
+fgga <- openair::timeAverage(fgga, avg.time = "sec")
 
-
-
-
-
-
-
-
+alll <- bind_cols(dm2,fgga)
+#
 
 
 
