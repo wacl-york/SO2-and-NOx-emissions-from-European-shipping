@@ -567,7 +567,7 @@ def.pol.cart <- function(cart){
   return(az)
 }
 
-dm3 <-  dm2 %>%
+dm3 <-  alll %>%
   mutate(wdir = def.pol.cart(matrix(c(V_C,U_C),ncol = 2)))
 
 dm <- dm3 %>%
@@ -585,10 +585,10 @@ dm$wind_flag[dm$wdir >= 225 & dm$wdir <= 315] <- "W"
 
   
 dm %>%  
-  filter(CO2_ppm <440) %>%
+  filter(co2<440) %>%
   ggplot()+
   geom_point(aes(x=LON_GIN,
-                 y=CO2_ppm,
+                 y=co2,
                  colour=wind_flag),
              size=4,
              alpha=0.8)+
@@ -602,10 +602,11 @@ dm %>%
   labs(y=bquote(''~CO[2]~(ppm)*''), x="Longitude", colour="Wind")
 
 
-dm %>%  
+dm %>% 
+  filter(SO2_TECO < 10)%>%
   ggplot()+
   geom_point(aes(x=LON_GIN,
-                 y=SO2_conc_scaled,
+                 y=SO2_TECO,
                  colour=wind_flag),
              size=4,
              alpha=0.8)+
@@ -633,7 +634,9 @@ fgga$date <- as.POSIXct(fgga$date)
 tz(fgga$date) <- "UTC"
 fgga <- openair::timeAverage(fgga, avg.time = "sec")
 
-alll <- bind_cols(dm2,fgga)
+alll <- left_join(dm2,fgga, by="date")
+
+saveRDS(alll, "G:/My Drive/ACRUISE/ACRUISE3/data/A3_all_merge.RDS")
 #
 
 

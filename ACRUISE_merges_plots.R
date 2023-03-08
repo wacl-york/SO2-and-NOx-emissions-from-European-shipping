@@ -27,7 +27,7 @@ library(stringr)
 ### Initial setup ###
 
 #set working directory
-setwd("G:/My Drive/ACRUISE/ACRUISE3/data")
+setwd("G:/My Drive/ACRUISE/ACRUISE2/data")
 
 
 ################################################################################
