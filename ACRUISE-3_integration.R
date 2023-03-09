@@ -16,12 +16,8 @@ library(acruiseR)
 library(nanotime)
 library(ggplot2)
 library(plotly)
-library(dplyr)
 library(ggmap)
 library(ggplot2)
-library(reshape2)
-library(grid)
-library(gridExtra)
 library(Rmisc)
 library(plotly)
 library(tidyverse)
@@ -89,9 +85,9 @@ dmc <-  core %>%
                  ymd_hms("2022-04-30 12:30:00"),
                  ymd_hms("2022-04-30 16:10:00"))) 
 
-dmf <-  fgga %>%
+dmc <-  fgga %>%
   filter(between(date, 
-                 as.nanotime("2022-04-30 12:30:00", 
+                 as.nanotime("2022-04-30 14:00:00", 
                              format="%Y-%m-%d %H:%M:%S", 
                              tz="UTC"),
                  as.nanotime("2022-04-30 16:10:00", 
@@ -121,12 +117,12 @@ dmc <-  core %>%
                  ymd_hms("2022-05-02 12:10:00"),
                  ymd_hms("2022-05-02 15:40:00")))
 
-dmf <-  fgga %>%
+dmc <-  fgga %>%
   filter(between(date, 
-                 as.nanotime("2022-05-02 12:10:00", 
+                 as.nanotime("2022-05-02 13:50:00", 
                              format="%Y-%m-%d %H:%M:%S", 
                              tz="UTC"),
-                 as.nanotime("2022-05-02 15:40:00", 
+                 as.nanotime("2022-05-02 16:10:00", 
                              format="%Y-%m-%d %H:%M:%S", 
                              tz="UTC"))) 
 
@@ -156,10 +152,10 @@ dmf <-  fgga %>%
 ### SO2 ###
 
 #background 
-bg_so2 <- identify_background(dmc$SO2_ppb, method="gam", k=5)
+bg_so2 <- identify_background(dmc$SO2_mr, method="gam", k=5)
 
-acruiseR::plot_background(dmc$SO2_ppb, dmc$time_nano, bg_so2,  
-                          plume_sd_threshold = 3,
+acruiseR::plot_background(dmc$SO2_mr, dmc$time_nano, bg_so2,  
+                          plume_sd_threshold = 1,
                           plume_sd_starting = 0.5,
                           ylabel = "Concentration",
                           xlabel = "Time",
@@ -171,14 +167,14 @@ acruiseR::plot_background(dmc$SO2_ppb, dmc$time_nano, bg_so2,
 
 
 #plumes 
-plumz_so2 <- acruiseR::detect_plumes(dmc$SO2_ppb, bg_so2, dmc$time_nano,
-                                     plume_sd_threshold = 2,
+plumz_so2 <- acruiseR::detect_plumes(dmc$SO2_mr, bg_so2, dmc$time_nano,
+                                     plume_sd_threshold = 1,
                                      plume_sd_starting = .5,
                                      plume_buffer = 15,
                                      refit = TRUE )
 
 
-acruiseR::plot_plumes(dmc$SO2_ppb, dmc$time_nano, plumz_so2,
+acruiseR::plot_plumes(dmc$SO2_mr, dmc$time_nano, plumz_so2,
                       ylabel = "Concentration",
                       xlabel = "Time",
                       date_fmt = "%H:%M",
@@ -188,10 +184,10 @@ acruiseR::plot_plumes(dmc$SO2_ppb, dmc$time_nano, plumz_so2,
 ggplotly()
 
 #areas
-areaz_so2 <-  acruiseR::integrate_aup_trapz(dmc$SO2_ppb, dmc$time_nano, plumz_so2, dx=0.2, uncertainty = 0.3, uncertainty_type = "absolute")
+areaz_so2 <-  acruiseR::integrate_aup_trapz(dmc$SO2_mr, dmc$time_nano, plumz_so2, dx=0.2, uncertainty = 0.3, uncertainty_type = "absolute")
 
 
-fn <- 286
+fn <- 287
 
 
 ### CO2 ###
@@ -284,11 +280,30 @@ fgga$date <- fgga$time_nano
 
 
 #read lif
-fgga <- read.delim("G:/My Drive/ACRUISE/so2_comparison/reso2datafromacruise3/SO2_mr_5Hz_C286.txt", header = T, sep=",")
-fgga$SO2_ppb <- fgga$SO2_mr/1000
-fgga$time_nano <- as.nanotime(fgga$Date_time, format="%Y-%m-%d %H:%M:%E3S", tz="UTC")
+fgga <- read.delim("G:/My Drive/ACRUISE/so2_comparison/reso2datafromacruise3/SO2_mr_10Hz_C287.txt", header = T, sep=",", stringsAsFactors = F)
+
+#fgga$SO2_ppb <- fgga$SO2_mr/1000
+
+orgin <- as.character(fgga$Date_time[1])
+orgin <- paste0(substr(orgin, 1, 10), " 00:00:00")
+
+fgga$nsec <- as.numeric(substr(fgga$Date_time, 20, 23))
+fgga$time <- as.numeric(hms(substr(fgga$Date_time, 12, 19)))
+fgga$sec_from_mid <- fgga$nsec+fgga$time
+
+fgga$date <- ymd_hms(orgin) + fgga$sec_from_mid
+
+fgga <- fgga %>%
+  mutate(date = round_date(date, unit = "0.2s")) %>%
+  group_by(date) %>%
+  summarise_all(mean, na.rm = T)
+
+
+fgga$time_nano <- as.character(fgga$date)
+fgga$time_nano <- as.nanotime(fgga$time_nano, format="%Y-%m-%d %H:%M:%E3S", tz="UTC")
 fgga$date <- fgga$time_nano
 
+dmc <- fgga
 
 ########################
 

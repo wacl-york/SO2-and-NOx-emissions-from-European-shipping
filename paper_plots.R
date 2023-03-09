@@ -199,6 +199,98 @@ dm %>%
 #guides(colour="none")
 
 
+# 1hz teco vs 5hz lif
+dm %>%
+  filter(!is.na(SFC_5hz))%>%
+  ggplot(aes(x=SFC_1hz*100,
+             y=SFC_5hz*100))+
+  stat_poly_line(colour="#3b528b", 
+                 size=1) + 
+  stat_poly_eq(aes(label = paste(after_stat(eq.label),
+                                 after_stat(rr.label),
+                                 sep = "*\", \"*"))) +
+  geom_point(size=4,
+             colour="#fde725",
+             alpha=0.5)+
+  geom_errorbar(aes(xmin=SFC_1hz*100-SFC_1hz_abs*100,
+                    xmax=SFC_1hz*100*1.06+SFC_1hz_abs*100),
+                width=0.05)+
+  geom_errorbar(aes(ymin=SFC_5hz*100-SFC_5hz_abs*100,
+                    ymax=SFC_5hz*100*1.06+SFC_5hz_abs*100),
+                width=0.05)+
+  #facet_wrap(~Flight, scales = "free")+
+  theme_bw()+
+  theme(text = element_text(size=14),
+        #axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)
+        )+
+  viridis::scale_colour_viridis(option="viridis", discrete=F) +
+  labs(x= "SFC 1Hz (%) ", y="SFC 5Hz (%)")#+
+#guides(colour="none")
+
+
+
+# 1 hz teco vs lif
+dm %>%
+  filter(!is.na(SFC_5hz))%>%
+  ggplot(aes(x=SFC_1hz*100,
+             y=SFC_1hz_lif*100))+
+  stat_poly_line(colour="#3b528b", 
+                 size=1) + 
+  stat_poly_eq(aes(label = paste(after_stat(eq.label),
+                                 after_stat(rr.label),
+                                 sep = "*\", \"*"))) +
+  geom_point(size=4,
+             colour="#fde725",
+             alpha=0.5)+
+  geom_errorbar(aes(xmin=SFC_1hz*100-SFC_1hz_abs*100,
+                    xmax=SFC_1hz*100*1.06+SFC_1hz_abs*100),
+                width=0.05)+
+  geom_errorbar(aes(ymin=SFC_1hz_lif*100-SFC_1hz_lif_abs*100,
+                    ymax=SFC_1hz_lif*100*1.06+SFC_1hz_lif_abs*100),
+                width=0.05)+
+  #facet_wrap(~Flight, scales = "free")+
+  theme_bw()+
+  theme(text = element_text(size=14),
+        #axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)
+  )+
+  viridis::scale_colour_viridis(option="viridis", discrete=F) +
+  labs(x= "SFC 1Hz TECO (%) ", y="SFC 1Hz LIF (%)")#+
+#guides(colour="none")
+
+
+# same but with york regression
+
+#format data
+york_data <- tibble(
+  X = dm$SFC_1hz,
+  Y = dm$SFC_1hz_lif,
+  Xstd = dm$SFC_1hz_abs,
+  Ystd = dm$SFC_1hz_lif_abs) %>%
+  na.omit()
+
+#york regression magic
+results <- openair:::YorkFit(york_data)
+print(results)
+
+
+
+ggplot(york_data, aes(x = X, y = Y)) +
+  geom_point() +
+  geom_errorbarh(aes(xmax = X + Xstd, xmin = X - Xstd)) +
+  geom_errorbar(aes(ymax = Y + Ystd, ymin = Y - Ystd)) +
+  geom_abline(slope = results$Slope, intercept = results$Intercept,
+              lty = 5, colour = "red") +
+  geom_smooth(method = "lm", lty = 3, colour = "blue") 
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -567,13 +659,15 @@ def.pol.cart <- function(cart){
   return(az)
 }
 
-dm3 <-  alll %>%
+dm3 <-  dm %>%
   mutate(wdir = def.pol.cart(matrix(c(V_C,U_C),ncol = 2)))
 
 dm <- dm3 %>%
   filter(HGT_RADR < 500) %>%
   openair::timeAverage(avg.time = "min")
 #filter(flight == 263) %>%
+
+dm$wind_flag <- 1
 
 dm$wind_flag[dm$wdir >315 | dm$wdir < 45] <- "N"
 dm$wind_flag[dm$wdir >= 45 & dm$wdir <= 135] <- "E"
@@ -585,7 +679,7 @@ dm$wind_flag[dm$wdir >= 225 & dm$wdir <= 315] <- "W"
 
   
 dm %>%  
-  filter(co2<440) %>%
+  filter(co2<416 & co2>402) %>%
   ggplot()+
   geom_point(aes(x=LON_GIN,
                  y=co2,
@@ -603,10 +697,10 @@ dm %>%
 
 
 dm %>% 
-  filter(SO2_TECO < 10)%>%
+  #filter(SO2_TECO < 10)%>%
   ggplot()+
   geom_point(aes(x=LON_GIN,
-                 y=SO2_TECO,
+                 y=so2,
                  colour=wind_flag),
              size=4,
              alpha=0.8)+
@@ -637,7 +731,16 @@ fgga <- openair::timeAverage(fgga, avg.time = "sec")
 alll <- left_join(dm2,fgga, by="date")
 
 saveRDS(alll, "G:/My Drive/ACRUISE/ACRUISE3/data/A3_all_merge.RDS")
-#
+
+
+#a1 prep
+
+dm <- dm %>% rename(V_C = v,
+              U_C= u,
+              W_C = w,
+              HGT_RADR = hgt_radr,
+              LON_GIN = lon,
+              LAT_GIN = lat)
 
 
 
