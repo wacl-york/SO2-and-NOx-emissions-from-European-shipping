@@ -262,10 +262,10 @@ dm %>%
 
 #format data
 york_data <- tibble(
-  X = dm$SFC_1hz,
-  Y = dm$SFC_1hz_lif,
-  Xstd = dm$SFC_1hz_abs,
-  Ystd = dm$SFC_1hz_lif_abs) %>%
+  X = dm$SFC_1hz*100,
+  Y = dm$SFC_1hz_lif*100,
+  Xstd = dm$SFC_1hz_abs*100,
+  Ystd = dm$SFC_1hz_lif_abs*100) %>%
   na.omit()
 
 #york regression magic
@@ -275,20 +275,23 @@ print(results)
 
 
 ggplot(york_data, aes(x = X, y = Y)) +
-  geom_point() +
+  geom_point(colour="grey") +
   geom_errorbarh(aes(xmax = X + Xstd, xmin = X - Xstd)) +
   geom_errorbar(aes(ymax = Y + Ystd, ymin = Y - Ystd)) +
-  geom_abline(slope = results$Slope, intercept = results$Intercept,
-              lty = 5, colour = "red") +
-  geom_smooth(method = "lm", lty = 3, colour = "blue") 
+  geom_smooth(method = "lm", lty = 3, colour = "blue") +
+  annotate("text", x = 1, y = 2, label = eq_lab, size=5)+
+  annotate("text", x = 1, y = 1.8, label = sd_lab,size=5)+
+  theme_bw()+
+  theme(text = element_text(size=14)  )+
+  labs(x= "SFC 1Hz TECO (%) ", y="SFC 1Hz LIF (%)")#+
 
 
 
 
 
+eq_lab <- paste0("y = ", round(results$Slope, digits=2), "x ", round(results$Intercept, digits=3))
 
-
-
+sd_lab <- paste0("slope sd = ", round(results$Slope_error, digits=3))
 
 
 
