@@ -13,12 +13,12 @@ library(measurements)
 library(ggplot2)
 library(scales)
 library(praise)
-
+library(plotrix)
 
 
 
 ##### ACRUISE-3
-dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-3_integration/ACRUISE-3_integration_uncert_freqs.csv",
+dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-3_integration/ACRUISE-3_integration_uncert_1Hz.csv",
                stringsAsFactors = F,
                header=T)
 
@@ -296,6 +296,87 @@ sd_lab <- paste0("slope sd = ", round(results$Slope_error, digits=3))
 
 
 
+############ differences in areas
+
+dm %>%
+  #filter(!is.na(SFC_5hz))%>%
+  ggplot()+
+  geom_line(aes(x=num,
+                 y=co2_10Hz_area,
+                colour="10 Hz"),
+             size=2,
+             alpha=0.8)+
+  geom_line(aes(x=num,
+                 y=co2_5Hz_area,
+                colour = "5 Hz"),
+             size=2,
+             alpha=0.8)+
+  geom_line(aes(x=num,
+                 y=co2_1Hz_area,
+                colour="1 Hz"),
+             size=2,
+             alpha=0.8)+
+  theme_bw()+
+  scale_color_manual(name = "colours", values = c("10 Hz" = "#31688e", "5 Hz" = "#90d743", "1 Hz" = "#fde725")) +
+  
+  theme(text = element_text(size=14),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(y=bquote(''~CO[2]~area*''))
+
+
+
+dm %>%
+  #filter(!is.na(SFC_5hz))%>%
+  ggplot()+
+  geom_line(aes(x=num,
+                y=so2_lif_area,
+                colour = "5 Hz"),
+            size=2,
+            alpha=0.8)+
+  geom_line(aes(x=num,
+                y=so2_lif_1hz_area,
+                colour="1 Hz LIF"),
+            size=2,
+            alpha=0.8)+
+  geom_line(aes(x=num,
+                y=so2_lif_1hz_area,
+                colour="1 Hz TECO"),
+            size=2,
+            alpha=0.8)+
+  theme_bw()+
+  scale_color_manual(name = "colours", values = c("5 Hz" = "#fc8961", "1 Hz LIF" = "#b73779", "1 Hz TECO" = "#51127c")) +
+  theme(text = element_text(size=14),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(y=bquote(''~SO[2]~area*''))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -304,7 +385,7 @@ sd_lab <- paste0("slope sd = ", round(results$Slope_error, digits=3))
 
 
 ##### ACRUISE-2
-dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-2_integration/ACRUISE-2_integration_just_anthem.csv",
+dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-2_integration/ACRUISE-2_integration_prelim_uncert.csv",
                stringsAsFactors = F,
                header=T)
 #dm <- dm %>% select(-c("X"))
@@ -327,9 +408,9 @@ dm$limit <- 0.5
 dm$limit[dm$Sea == "EC"] <- 0.1
 
 
-#dm$date <- dmy_hms(dm$date) 
+dm$date <- dmy_hms(dm$date) 
 
-#dm$date <- dm$date - hours(1)
+dm$date <- dm$date - hours(1)
 
 
 #SHIP AREA LIMIT
@@ -469,8 +550,69 @@ latlon <- readRDS("G:/My Drive/ACRUISE/ACRUISE2/data_raw/core_for_stats/ACRUISE-
 tz(latlon$date) <- "UTC"
 dm_map <- left_join(dm, latlon, by="date", all.x=F)
 
+dm_map <- dm_map %>% filter(Scrubber=="yes")
+
+dm_map$sfc_group <- 0.1
+dm_map$sfc_group[dm_map$SFC>0.1 & dm_map$SFC<=0.5] <- 0.5
+dm_map$sfc_group[dm_map$SFC>0.5] <- 1
+
 saveRDS(dm_map, "G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-2_integration/acruise2_sfcs_latlon.RDS")
-write.csv(dm_map, "G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-2_integration/acruise2_sfcs_latlon_2.csv")
+write.csv(dm_map, "G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-2_integration/acruise2_sfcs_latlon_2_scrubbers_only.csv")
+
+
+
+
+
+################ scrubbers only
+
+
+dm %>%
+  filter(Scrubber == "yes") %>%
+ggplot()+
+  geom_hline(aes(yintercept = limit))+
+  geom_point(aes(x=Ship,
+                 y=SFC,
+                 colour=seaf),
+             size=4)+
+  geom_errorbar(aes(x=Ship,
+                    y=SFC,
+                    ymin=SFC-Absolute.unc,
+                    ymax=SFC*1.06+Absolute.unc),
+                width=0.1,
+                position = position_dodge(0.05))+
+  facet_grid(~Sea, scales = "free", space="free_x")+
+  theme_bw()+
+  theme(text = element_text(size=14),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  viridis::scale_colour_viridis(option="viridis", discrete=T) +
+  labs(x= "Ship", y="SFC (%)", colour="Sea")+
+  guides(colour="none")
+
+
+
+a <- dm %>%
+  filter(Scrubber == "no") 
+
+a <- dm %>%
+  filter(Sea != "EC") 
+
+mean(a$SFC)
+#sd(a$SFC)
+std.error(a$SFC)
+
+#
+
+
+
+range(a$SFC)
+
+
+
+
+
+
+
+
 
 
 
