@@ -354,7 +354,28 @@ dm %>%
 
 
 
+dm %>%
+  #filter(!is.na(SFC_5hz))%>%
+  ggplot()+
+  geom_hline(yintercept = 0,
+             size=2)+
+  geom_point(aes(x=num,
+                y=co2_10Hz_area-co2_1Hz_area,
+                colour=Flight),
+            size=4)+
+  geom_errorbar(aes(x=num,
+                    y=co2_10Hz_area-co2_1Hz_area,
+                    ymin=co2_10Hz_area-co2_1Hz_area-co2_1Hz_uncert-co2_10Hz_unc,
+                    ymax=co2_10Hz_area-co2_1Hz_area+co2_1Hz_uncert+co2_10Hz_unc),
+                width=0.5)+
+  theme_bw()+
+  theme(text = element_text(size=14),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())+
+  viridis::scale_colour_viridis(option="viridis", discrete=T) +
+  labs(y=bquote(''~CO[2]~10~Hz~area~-~1~Hz~area*''))
 
+#
 
 
 
@@ -720,6 +741,50 @@ ggplot(data=dm)+
 
 
 
+##################################
+
+# co2/nox
+
+#read
+dm <- read.csv("C:/Users/Dominika/Desktop/integrations_ACRUISE1_C179_C190_no_ships.csv",
+               stringsAsFactors = F,
+               header=T)
+
+
+dm$limit <- 3.5
+dm$limit[dm$Sea == "EC"] <- 0.1
+
+#colour variable
+dm %>%
+  filter(CO2 != 0)%>%
+ggplot()+
+  geom_point(aes(x=Ship,
+                 y=NOx/CO2,
+                 colour=Sea),
+             size=4)+
+  # geom_errorbar(aes(x=typef,
+  #                   y=SFC,
+  #                   ymin=SFC-Absolute.unc,
+  #                   ymax=SFC*1.06+Absolute.unc),
+  #               width=0.1,
+  #               position = position_dodge(0.05))+
+  theme_bw()+
+  theme(text = element_text(size=13),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  viridis::scale_colour_viridis(option="viridis", discrete=T) +
+  labs(x= "Ship", y=bquote(''~NO[x]~/~CO[2]~ratio*''), colour="Sea")#+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ############################
@@ -753,6 +818,11 @@ ggplot(york_data, aes(x = X, y = Y)) +
 # nice plot
 
 ggplot(data=york_data, aes(x = X, y = Y))+
+  geom_abline(slope=1,
+              intercept = 0,
+              colour="#31688e",
+              alpha=0.8,
+              size=3)+
   geom_abline(slope = results$Slope, 
               intercept = results$Intercept, 
               colour = "#a0da39",
@@ -761,8 +831,6 @@ ggplot(data=york_data, aes(x = X, y = Y))+
              colour="grey")+
   geom_errorbarh(aes(xmax = X + Xstd, xmin = X - Xstd)) +
   geom_errorbar(aes(ymax = Y + Ystd, ymin = Y - Ystd)) + 
-  annotate("text", x = 4, y = 1.15, label = "y = 0.1150x - 0.2040", size=5)+
-  annotate("text", x = 4, y = 1.09, label = "slope sd = 0.0174",size=5)+
   theme_bw()+
   theme(text = element_text(size=14),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+

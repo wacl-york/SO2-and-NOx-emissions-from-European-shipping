@@ -27,11 +27,22 @@ library(stringr)
 ### Initial setup ###
 
 #set working directory
-setwd("G:/My Drive/ACRUISE/ACRUISE2/data")
+setwd("G:/My Drive/ACRUISE/ACRUISE3/data")
 
 
 ################################################################################
 ### NCDF file ###
+
+#NB
+
+faam_file = tidync::hyper_tibble(paste0("core_1hz/",core_1_files[1]))
+
+faam_file %>% 
+  select(Time, starts_with("TAT")) %>% 
+  select(-contains("FLAG"),-contains("CU")) %>% 
+  pivot_longer(-Time) %>% 
+  ggplot()+
+  geom_line(aes(Time, value,colour = name))
 
 
 # for(fn in c("c265","c264", "c263", "c262", "c261", "c260", "c259", "c258", "c257", "c256", "c255", "c254", "c253")){
@@ -56,7 +67,7 @@ origin <-  paste0(origin, " 00:00")
 data_nc <-  ncdf4::nc_open(ncdf)
 
 #choose variables
-vars_nc <- c("U_C", "V_C", "W_C", "LAT_GIN", "LON_GIN","HGT_RADR", "WOW_IND", "SO2_TECO", "SO2_TECO_FLAG", "O3_2BTECH", "O3_2BTECH_FLAG")
+vars_nc <- c("U_C", "V_C", "W_C", "LAT_GIN", "LON_GIN","HGT_RADR", )
 
 #turn NetCDF into data frame
 for (i in 1:length(vars_nc)) {

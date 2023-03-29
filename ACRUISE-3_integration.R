@@ -40,7 +40,7 @@ acruise_files <-  list.files("./core_rds/", pattern = "RDS")
 na_files <-  list.files("./fgga_rds/", pattern = "RDS") 
 
 # choose flight 
-fn <- 292
+fn <- 287
 
 #choose files
 acruise <- paste0("./core_rds/",acruise_files[grep(fn,acruise_files,ignore.case=TRUE)])
@@ -152,10 +152,10 @@ dmf <-  fgga %>%
 ### SO2 ###
 
 #background 
-bg_so2 <- identify_background(dmc$SO2_mr, method="gam", k=5)
+bg_so2 <- identify_background(dmc$SO2_TECO, method="gam", k=5)
 
-acruiseR::plot_background(dmc$SO2_mr, dmc$time_nano, bg_so2,  
-                          plume_sd_threshold = 1,
+acruiseR::plot_background(dmc$SO2_TECO, dmc$time_nano, bg_so2,  
+                          plume_sd_threshold = 5,
                           plume_sd_starting = 0.5,
                           ylabel = "Concentration",
                           xlabel = "Time",
@@ -167,14 +167,14 @@ acruiseR::plot_background(dmc$SO2_mr, dmc$time_nano, bg_so2,
 
 
 #plumes 
-plumz_so2 <- acruiseR::detect_plumes(dmc$SO2_mr, bg_so2, dmc$time_nano,
-                                     plume_sd_threshold = 1,
-                                     plume_sd_starting = .5,
+plumz_so2 <- acruiseR::detect_plumes(dmc$SO2_TECO, bg_so2, dmc$time_nano,
+                                     plume_sd_threshold =2,
+                                     plume_sd_starting = 2,
                                      plume_buffer = 15,
                                      refit = TRUE )
 
 
-acruiseR::plot_plumes(dmc$SO2_mr, dmc$time_nano, plumz_so2,
+acruiseR::plot_plumes(dmc$SO2_TECO, dmc$time_nano, plumz_so2,
                       ylabel = "Concentration",
                       xlabel = "Time",
                       date_fmt = "%H:%M",
@@ -184,10 +184,27 @@ acruiseR::plot_plumes(dmc$SO2_mr, dmc$time_nano, plumz_so2,
 ggplotly()
 
 #areas
-areaz_so2 <-  acruiseR::integrate_aup_trapz(dmc$SO2_mr, dmc$time_nano, plumz_so2, dx=0.2, uncertainty = 0.3, uncertainty_type = "absolute")
+areaz_so2 <-  acruiseR::integrate_aup_trapz(dmc$SO2_TECO, dmc$time_nano, plumz_so2, dx=0.2, uncertainty = 0.3, uncertainty_type = "absolute")
 
 
-fn <- 287
+#fn <- 284
+
+
+#### peak heights
+peakMaximumsList = list()
+
+for(i in 1:nrow(plumz_so2)){
+  
+  peakMaximumsList[[i]] = dmc %>% 
+    filter(between(time_nano, plumz_so2$start[i], plumz_so2$end[i])) %>% 
+    filter(SO2_TECO == max(SO2_TECO))
+}
+
+peakMaximums = bind_rows(peakMaximumsList) %>% 
+  tibble()
+
+
+write.csv(peakMaximums, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_so2_ph.csv"))
 
 
 ### CO2 ###
@@ -252,13 +269,13 @@ areaz_co2 <-  acruiseR::integrate_aup_trapz(dmf$co2, dmf$time_nano, plumz_co2, d
 
 areaz_so2$start <- as.POSIXct(areaz_so2$start)
 areaz_so2$end <- as.POSIXct(areaz_so2$end)
-write.csv(areaz_so2, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_so2_lif.csv"))
+write.csv(areaz_so2, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_so2_ph.csv"))
 
 
 
 areaz_co2$start <- as.POSIXct(areaz_co2$start)
 areaz_co2$end <- as.POSIXct(areaz_co2$end)
-write.csv(areaz_co2, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_co2_10Hz.csv"))
+write.csv(areaz_co2, paste0("G:/My Drive/ACRUISE/Stuarts_integration/",fn,"_co2_ph.csv"))
 
 
 
