@@ -18,11 +18,11 @@ library(plotrix)
 
 
 ##### ACRUISE-3
-dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-3_integration/ACRUISE-3_integration_uncert_1Hz.csv",
+dm3 <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-3_integration/ACRUISE-3_integration_uncert_1Hz.csv",
                stringsAsFactors = F,
                header=T)
 
-dm <-  dm[1:38,]
+dm3 <-  dm3[1:38,]
 
 dm$SFC <- dm$SFC*100
 dm$Relative.unc <- dm$Relative.unc*100
@@ -643,13 +643,13 @@ range(a$SFC)
 
 
 #### ACRUISE-1
-dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-1_integration/ACRUISE-1_integration_uncert.csv",
+dm1 <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-1_integration/ACRUISE-1_integration_uncert.csv",
                stringsAsFactors = F,
                header=T)
 
 #dm <- dm %>% select(-c("X"))
 
-dm$SFC <- dm$SFC*100
+dm1$SFC <- dm1$SFC*100
 dm$Relative.unc <- dm$Relative.unc*100
 dm$Absolute.unc <- dm$Absolute.unc*100
 
@@ -718,7 +718,7 @@ dm %>%
 
 
 #SHIP AREA LIMIT
-ggplot(data=dm)+
+ggplot(data=dm1)+
   geom_hline(aes(yintercept = limit))+
   geom_point(aes(x=Ship,
                  y=SFC,
@@ -746,48 +746,168 @@ ggplot(data=dm)+
 # co2/nox
 
 #read
-dm <- read.csv("C:/Users/Dominika/Desktop/integrations_ACRUISE1_C179_C190_no_ships.csv",
+dm <- read.csv("G:/My Drive/ACRUISE/nvm/ACRUISE_integration/integration/integrations_ACRUISE1_C179_C190.csv",
                stringsAsFactors = F,
                header=T)
 
 
 dm$limit <- 3.5
 dm$limit[dm$Sea == "EC"] <- 0.1
+dm <-  dm %>%
+  filter(CO2 != 0)
+dm$nox_ratio <- dm$NOx/(dm$CO2*1000)
 
 #colour variable
 dm %>%
-  filter(CO2 != 0)%>%
+  filter(Ship != "Star Cosmo" & Ship != "Grande Argentina") %>%
 ggplot()+
   geom_point(aes(x=Ship,
-                 y=NOx/CO2,
+                 y=nox_ratio,
                  colour=Sea),
              size=4)+
-  # geom_errorbar(aes(x=typef,
-  #                   y=SFC,
-  #                   ymin=SFC-Absolute.unc,
-  #                   ymax=SFC*1.06+Absolute.unc),
-  #               width=0.1,
-  #               position = position_dodge(0.05))+
+  #ylim(0,50)+
   theme_bw()+
   theme(text = element_text(size=13),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   viridis::scale_colour_viridis(option="viridis", discrete=T) +
-  labs(x= "Ship", y=bquote(''~NO[x]~/~CO[2]~ratio*''), colour="Sea")#+
+  labs(x= "Ship", y=bquote(''~NO[x]/CO[2]~ratio*''), colour="Sea")#
+
+
+a <- dm %>%
+  filter(Sea == "EC") 
+
+  mean(dm$nox_ratio)
+  sd(dm$nox_ratio)
+  std.error(dm$nox_ratio)
+  range(dm$nox_ratio)
+  
+
+
+b <- c(3.45,2.98,2.51,2.59)
+
+mean(a)
+std.error(a$ratio_avg)
+range(a$ratio_avg)
+
+
+
+a <- a %>%
+  filter(Ship != "Star Cosmo" & Ship != "Grande Argentina") %>%
+  group_by(Ship) %>%
+  summarise(ratio_avg = mean(nox_ratio))%>%
+  na.omit()
+
+a <- a[2:20,]
+
+saveRDS(a, "G:/My Drive/ACRUISE/model/ACRUISE-1_ships_avg_nox_ratio.RDS")
 
 
 
 
+###### nox mod comparison
+
+ship_mod <- read.csv("G:/My Drive/ACRUISE/model/ACRUISE_1_model.csv", stringsAsFactors = F) 
+
+
+ship_avg <- readRDS("G:/My Drive/ACRUISE/model/ACRUISE-1_ships_avg_nox_ratio.RDS")
+ship_avg <-  ship_avg[2:18,]
+
+
+ship_names <- read.csv("G:/My Drive/ACRUISE/model/ACRUISE-1_ship_names.csv", stringsAsFactors = F) %>%
+  select("Name", "IMO") %>%
+  rename("Ship"="Name") %>%
+  na.omit()
+
+ship_all <- left_join(ship_avg, ship_names, by="Ship")
+
+ship_avg <- ship_all[!duplicated(ship_all),]
+
+#merge with model
+ship_comp <- left_join(ship_avg,ship_mod,by="IMO")
+
+#make model sfc and pray
+ship_comp$ratio_mod <- ship_comp$NOx..kg.*1.05/ship_comp$CO2..kg.
+
+
+ship_comp$diff <- ship_comp$ratio_mod - ship_comp$ratio_avg
+
+#ship_comp <- na.omit(ship_comp)
+
+ship_comp %>%
+  ggplot()+
+  geom_col(aes(x=Ship,
+               y=diff),
+           fill="grey")+
+  geom_point(aes(x=Ship,
+                 y=ratio_avg),
+             size=4,
+             colour="#35b779")+
+  geom_point(aes(x=Ship,
+                 y=ratio_mod),
+             size=4,
+             colour="#440154")+
+  theme_bw()+
+  theme(text = element_text(size=14),
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = 0.5, 
+                                   hjust=1))+
+  #scale_y_continuous(breaks=seq(-3,5,0.5))+
+  labs(x= "Ship name", 
+       y="Ratio")
+
+
+#
+
+
+mean(na.omit(ship_comp$SFC_avg))
+sd(na.omit(ship_comp$SFC_avg))
+
+
+#
+
+ggplot()+
+  geom_vline(xintercept=0.5,
+             colour="black",
+             alpha=0.5,
+             size=2,
+             linetype="dotted")+
+  geom_vline(xintercept=3.5,
+             colour="black",
+             alpha=0.5,
+             size=2,
+             linetype="dashed")+
+  geom_line(aes(x=a1$SFC_avg,
+                y=a1$diff),
+            size=2,
+            colour="#fde725",
+            alpha=0.5)+
+  geom_point(aes(x=a1$SFC_avg,
+                 y=a1$diff),
+             size=4,
+             fill="#fde725",
+             shape=21)+
+  geom_line(aes(x=a2$SFC_avg,
+                y=a2$diff),
+            size=2,
+            colour="#31688e",
+            alpha=0.5)+
+  geom_point(aes(x=a2$SFC_avg,
+                 y=a2$diff),
+             size=4,
+             fill="#31688e",
+             shape=21)+
+  theme_bw()+
+  theme(text = element_text(size=14))+
+  scale_y_continuous(breaks=seq(-3,5,0.5))+
+  labs(x= "Observed SFC (%)", 
+       y="SFC difference (%)")
+
+#
 
 
 
 
-
-
-
-
-
-
-############################
+  ############################
 
 
 # YORK REGRESSION
@@ -963,18 +1083,112 @@ dm <- dm %>% rename(V_C = v,
 
 
 
+###################################
+
+# comparison of all 3 campaigns
+
+dm <-  read.csv("G:/My Drive/ACRUISE/Stuarts_integration/all_sfcs_310323.csv", 
+         stringsAsFactors = F, 
+         header = T)
+
+dm$SFC <- dm$SFC*100
+dm$Absolute.unc <-  dm$Absolute.unc*100
+
+dm$zone <- "out"
+dm$zone[dm$Sea == "EC"] <- "in"
+
+
+dm %>%
+  filter(Sea !="AO") %>%
+  group_by(zone) %>%
+  ggplot()+
+  geom_point(aes(x=SFC,
+                 y=When,
+                 colour=Sea),
+             size=4)+
+  # geom_errorbar(aes(x=SFC,
+  #                   y=Sea,
+  #                   xmin=SFC-Absolute.unc,
+  #                   xmax=SFC*1.06+Absolute.unc),
+  #               width=0.1,
+  #               position = position_dodge(0.05),
+  #               colour="grey")+
+  facet_grid(~zone,
+             space = "free_x")+
+  theme_bw()+
+  theme(text = element_text(size=16))+
+  scale_colour_manual(values = c("EC" = "#21918c",
+                                 "BB"="#440154",
+                                 "SW"="#fde725",
+                                 "PTO"="#35b779",
+                                 "PTL"="#31688e"))+
+  labs(y= "Sea", x="SFC (%)")+
+guides(colour="none")
+
+
+
+scale_colour_manual(values = c("EC" = "#21918c",
+                               "BB"="#440154",
+                               "SW"="#fde725",
+                               "PTO"="#35b779",
+                               "PTL"="#31688e"))
 
 
 
 
 
+  
+  
+  #SHIP AREA LIMIT
+  
+library(dplyr)
+dm <- dm %>% group_by(Ship) %>% mutate(id=cur_group_id())
+  
+dm$limit <- 0.5
+dm$limit[dm$When==2019] <- 3.5
+dm$limit[dm$Sea=="EC"] <- 0.1
+
+
+dm %>%
+  filter(Sea !="AO") %>%
+  ggplot()+
+  geom_hline(aes(yintercept = limit),
+             colour="#BF8A8A",
+             size=5)+
+  geom_point(aes(x=id,
+                 y=SFC,
+                 colour=zone),
+             size=10)+
+  facet_grid(~When, scales = "free", space="free_x")+
+  theme_bw()+
+  theme(text = element_text(size=40,
+                            colour="white"),
+        axis.text = element_text(colour="white"),
+        strip.background =element_rect(fill="black"),
+        strip.text = element_text(colour = 'white'),
+        axis.line = element_line(colour="white"),
+        panel.border = element_rect(color = "white", 
+                                    fill = NA, 
+                                    size = 2))+
+  scale_colour_manual(values = c("in" = "#2669BF",
+                                 "out" = "#F26241"))+
+labs(x= "Ship", y="SFC (%)", colour="SECA")
 
 
 
 
-
-
-
+  
+  ggplot()+
+    geom_histogram(data=dm2, 
+                   aes(x=SFC,
+                       y=..count../sum(..count..)),
+                   binwidth =)+
+    theme_bw()+
+    theme(text = element_text(size=14))+
+    viridis::scale_colour_viridis(option="viridis", discrete=T)+
+    labs(x= "SFC (%)", y="Counts")
+  
+  
 
 
 
@@ -1025,3 +1239,263 @@ ggplot(data=dm)+
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   viridis::scale_colour_viridis(option="viridis", discrete=T) +
   labs(x= "Year", y="SFC (%)")
+
+
+
+
+
+
+
+
+
+
+
+#--------------------------------------------------
+
+#comparison with model
+
+#load  data
+
+#acruise 2
+ship_avg <- readRDS("G:/My Drive/ACRUISE/model/ACRUISE-2_ships_avg_SFC.RDS")
+ship_mod <- read.csv("G:/My Drive/ACRUISE/model/ACRUISE_2_model.csv", stringsAsFactors = F)
+
+#acruise 1
+ship_avg <- readRDS("G:/My Drive/ACRUISE/model/ACRUISE-1_ships_avg_SFC.RDS")
+ship_mod <- read.csv("G:/My Drive/ACRUISE/model/ACRUISE_1_model.csv", stringsAsFactors = F)
+ship_avg$SFC_avg <- ship_avg$SFC_avg*100
+
+
+
+#merge with model
+ship_comp <- left_join(ship_avg,ship_mod,by="IMO")
+
+#make model sfc and pray
+ship_comp$SFC_mod <- ship_comp$SOx..kg.*1.6/ship_comp$CO2..kg.
+
+ship_comp$SFC_mod <- ship_comp$SFC_mod*100
+
+
+a1 <- ship_comp
+
+#plot this diseaster
+
+ship_comp %>%
+  ggplot()+
+  geom_point(aes(x=Ship,
+                 y=SFC_avg),
+             size=4,
+             colour="#35b779")+
+  geom_point(aes(x=Ship,
+                 y=SFC_mod),
+             size=4,
+             colour="#440154")+
+  theme_bw()+
+  theme(text = element_text(size=10),
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = 0.5, 
+                                   hjust=1))+
+  labs(x= "Ship", y="SFC (%)")
+
+
+# plot comparison
+
+ship_comp %>%
+ggplot()+
+  geom_point(aes(x=SFC_avg,
+             y=SFC_mod))
+
+
+
+
+ggplot()+
+  geom_histogram(data=ship_a2, 
+                 aes(x=SFC_avg,
+                     y=..count../sum(..count..)),
+                 binwidth = 0.1)+
+  geom_histogram(data=ship_a2, 
+                 aes(x=SFC_mod,
+                     y=..count../sum(..count..)),
+                 binwidth =0.1,
+                 fill="#440154",
+                 alpha=0.6)+
+  theme_bw()+
+  theme(text = element_text(size=14))+
+  viridis::scale_colour_viridis(option="viridis", discrete=T)+
+  labs(x= "SFC (%)", y="Counts")
+
+
+#
+
+
+## difference plots
+
+a2$diff <- a2$SFC_mod - a2$SFC_avg
+
+ship_comp <- na.omit(ship_comp)
+
+ship_comp %>%
+  ggplot()+
+  geom_col(aes(x=Ship,
+                 y=diff),
+             fill="grey")+
+  geom_point(aes(x=Ship,
+                 y=SFC_avg),
+             size=4,
+             colour="#35b779")+
+  geom_point(aes(x=Ship,
+                 y=SFC_mod),
+             size=4,
+             colour="#440154")+
+  theme_bw()+
+  theme(text = element_text(size=14),
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = 0.5, 
+                                   hjust=1))+
+  scale_y_continuous(breaks=seq(-3,5,0.5))+
+  labs(x= "Ship name", 
+       y="SFC (%)")
+
+
+#
+
+
+  mean(na.omit(ship_comp$SFC_avg))
+  sd(na.omit(ship_comp$SFC_avg))
+
+
+#
+  
+  ggplot()+
+    geom_vline(xintercept=0.5,
+               colour="black",
+               alpha=0.5,
+               size=2,
+               linetype="dotted")+
+    geom_vline(xintercept=3.5,
+               colour="black",
+               alpha=0.5,
+               size=2,
+               linetype="dashed")+
+    geom_line(aes(x=a1$SFC_avg,
+                   y=a1$diff),
+               size=2,
+               colour="#fde725",
+              alpha=0.5)+
+    geom_point(aes(x=a1$SFC_avg,
+                  y=a1$diff),
+              size=4,
+              fill="#fde725",
+              shape=21)+
+    geom_line(aes(x=a2$SFC_avg,
+                   y=a2$diff),
+               size=2,
+               colour="#31688e",
+              alpha=0.5)+
+    geom_point(aes(x=a2$SFC_avg,
+                   y=a2$diff),
+               size=4,
+               fill="#31688e",
+               shape=21)+
+    theme_bw()+
+    theme(text = element_text(size=14))+
+    scale_y_continuous(breaks=seq(-3,5,0.5))+
+    labs(x= "Observed SFC (%)", 
+         y="SFC difference (%)")
+  
+  #
+
+
+
+
+
+
+
+
+
+
+
+######################
+# add imos a2
+ship_names <- read.csv("G:/My Drive/ACRUISE/model/ACRUISE-2_ships.csv", stringsAsFactors = F) %>%
+  select("Name", "IMO") %>%
+  rename("Ship"="Name") %>%
+  na.omit()
+
+ship_all <- left_join(dm, ship_names, by="Ship")
+
+ship_all <- ship_all[!is.na(ship_all$IMO),]
+
+ship_avg <- ship_all %>%
+  group_by(IMO) %>%
+  summarise(SFC_avg = mean(SFC)) %>%
+  left_join(., ship_names, by="IMO")
+
+saveRDS(ship_avg, "G:/My Drive/ACRUISE/model/ACRUISE-2_ships_avg_SFC.RDS")
+
+
+
+
+# add imos a1
+ship_names <- read.csv("G:/My Drive/ACRUISE/model/ACRUISE-1_ship_names.csv", stringsAsFactors = F) %>%
+  select("Name", "IMO") %>%
+  rename("Ship"="Name") %>%
+  na.omit()
+
+dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-1_integration/ACRUISE-1_integration_uncert.csv",
+                stringsAsFactors = F,
+                header=T) %>%
+  select("SFC", "Ship")
+
+ship_all <- left_join(dm, ship_names, by="Ship")
+
+ship_all <- ship_all[!is.na(ship_all$IMO),]
+
+ship_avg <- ship_all %>%
+  group_by(IMO) %>%
+  summarise(SFC_avg = mean(SFC)) %>%
+  left_join(., ship_names, by="IMO")
+
+saveRDS(ship_avg, "G:/My Drive/ACRUISE/model/ACRUISE-1_ships_avg_SFC.RDS")
+
+#
+
+
+
+
+
+#############################
+
+#origing compare sfcs
+
+dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-1_integration/origin_comparison/comparison.csv",
+               stringsAsFactors = F)
+
+dm$SFCo <- dm$SO2_origin*0.232*100/dm$CO2_origin
+
+dm$SFCr <- dm$SO2_r*0.232*100/dm$CO2_r
+
+dm$diff <- dm$SFCo - dm$SFCr
+
+dm$flag <- "b"
+dm$flag[dm$diff>0] <- "a"
+
+dm %>%
+  ggplot()+
+  geom_hline(aes(yintercept=0),
+             colour="grey",
+             size=2)+
+  geom_point(aes(x=SFCr,
+                 y=diff,
+                 colour=flag),
+             size=4
+             )+
+  theme_bw()+
+  theme(text = element_text(size=14))+
+  scale_colour_manual(values = c("b" = "#21918c",
+                                 "a"="#440154"))+
+  labs(x= "SFC R (%)", y="SFC Origin - SFC R (%)")+
+  guides(colour="none")
+
+
+
