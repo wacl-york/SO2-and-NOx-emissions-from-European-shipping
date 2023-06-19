@@ -6,6 +6,7 @@ library(ggrepel)
 library(ggmap)
 library(viridis)
 library(shonarrr)
+library(pals)
 
 #compile me please
 calc_background = function(dat){
@@ -34,11 +35,21 @@ calc_background = function(dat){
 
 # Read --------------------------------------------------------------------
 
-
+#ACRUISE-2
 setwd("G:/My Drive/ACRUISE/ACRUISE2/GC")
 voc = read.csv("ACRUISE-2_gc_ships_r1.csv") %>% 
   tibble()
 
+#ACRUISE-1
+setwd("G:/My Drive/ACRUISE/ACRUISE1/VOC")
+voc = read.csv("acruise1_vocs_tidy_with_ships.csv") %>% 
+  tibble()
+
+# shhip <- as.data.frame(c(0.942, 0.002, 0.732, 0.871, 1.004, 2.033, 1.954, 0.616, 0.789, 0.587, 0.673, 0.685, 0.783, 0.695, 0.706, 0.678, 0.786))
+# shhip$lab <- "ship"
+# shhip <- shhip %>% rename("ethane_area" = "c(0.942, 0.002, 0.732, 0.871, 1.004, 2.033, 1.954, 0.616, 0.789, 0.587, 0.673, 0.685, 0.783, 0.695, 0.706, 0.678, 0.786)")
+# 
+# test <- left_join(voc, shhip, keep = T)
 
 
 # Tidy --------------------------------------------------------------------
@@ -70,12 +81,13 @@ colNames <-  labeller(name =
              "propene" = "propene",
              "acetylene" = "acetylene",
              "ethylbenzene" = "ethylbenzene",
-             "toluene" = "toluene"))
+             "toluene" = "toluene",
+             "benzene" = "benzene"))
          
 vocNames = colOrder[colOrder != "carbon_dioxide"] # make CO2 free list for ratios
 
 
-# tidy the VOCs
+# tidy the VOCs: A2
 voc_long_noratio = voc %>% 
   select(-starts_with("X")) %>% # tidy weird excel column
   pivot_longer(-c(ship:file)) %>% # make long (values are measurement, uncertainty and flag)
@@ -106,6 +118,57 @@ co2_ratio = voc_long_noratio %>%
 
 voc_long = left_join(voc_long_noratio, co2_ratio, by = c("case", "bottle", "name")) # put them together
 
+
+#####################
+
+
+# tidy the VOCs: A1
+voc <- voc %>%
+  select(Ship, everything()) 
+
+#voc$Ship <- "backgr"
+
+#A1
+voc_ord <- rev(c("ethane","ethene","propane", "propene","iso.butane","n.butane","acetylene","butene1", "iso.butene","iso.pentane", "n.pentane","benzene"))
+
+colNames <- c("ethane" = "ethane",
+              "ethene" = "ethene",
+              "propane" = "propane", 
+              "propene" = "propene",
+              "iso.butane" = "iso-butane",
+              "n.butane" = "n-butane",
+              "butene1" = "but-1-ene",
+              "iso.butene" = "iso-butene",
+              "iso.pentane" = "iso-pentane",
+              "n.pentane" = "n-pentane",
+              "acetylene" = "acetylene",
+              "benzene" = "benzene")
+
+voc_long = voc %>% 
+  #select(-c(Peak, X, lat:end)) %>% # tidy weird excel column
+  pivot_longer(-c(Ship:flight)) %>% # make long (values are measurement, uncertainty and flag)
+  mutate(name = str_replace(name,  "_uncert","__uncertainty"), # make separator nice
+         name = str_replace(name,  "_flag","__flag"),
+         name = str_replace(name,  "_area",""),
+         name = ifelse(str_detect(name, "__"), name, paste0(name, "__spec")) # give measurement a name
+  ) %>% 
+  separate(name, c("name","type"), "__") %>% # split into name and type of values 
+  pivot_wider(names_from = "type", values_from = "value") %>% # widen the three value types (measurement, uncertainty and flag)
+  rename(value = spec) %>% # rename spec to value for semantics
+  mutate(value = ifelse(flag == 0, value, NA), # NA all level 2 flagged values
+         case_bottle = interaction(case,bottle), # make unique bottle ID
+         ship = str_trim(Ship, "both")#,
+         #name = factor(name, levels = colOrder)
+         ) #order in more sensible way
+
+voc_long$Ship <- "backgr"
+
+voc_long$Ship[voc_long$case_bottle %in% c(7.1,7.2,7.3)] <- "Hirado"
+voc_long$Ship[voc_long$case_bottle %in% c(6.18,6.24,1.60,2.54,7.4)] <- "unknown"
+
+
+
+###############
 
 # # make toluene ratios (change line 49)
 # toluene_ratio = voc_long_noratio %>% 
@@ -275,6 +338,197 @@ voc_long %>%
         panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank())+
   guides(scale="none")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##################################################################################################################################################################################################################
+# PLOTS THESIS
+
+#A2
+voc_ord <- rev(c("ethane","ethene","propane", "propene","iso_butane","n_butane","acetylene","but_1_ene", "iso_butene","iso_pentane", "n_pentane","cis_2_pentene","benzene", "ethylbenzene","toluene","p_xylene", "m_xylene","o_xylene"))
+
+
+voc_nam <- rev(c("ethane","ethene","propane", "propene","iso-butane","n-butane","acetylene","but-1-ene", "iso-butene","iso-pentane", "n-pentane","cis-2-pentene","benzene", "ethylbenzene","toluene","p-xylene", "m-xylene","o-xylene"))
+
+#fix names of variables
+
+
+#background - all flights
+voc_long %>% 
+  #filter(status == "out") %>% 
+  filter(name != "methane") %>% 
+  filter(name != "carbon_dioxide") %>% 
+  #filter(flight=="C265") %>%
+  #filter(case_bottle != 2.56) %>% 
+   ggplot()+
+  geom_bar(aes(case_bottle, value, 
+               fill = factor(name, 
+                             levels=voc_ord)),
+           position = "stack", 
+           stat = "identity")+
+  scale_fill_manual(values=as.vector(cols25(18)),
+                    labels=c(colNames))+
+  geom_point(aes(case_bottle, 
+                 0, 
+                 colour=ifelse(Ship=="backgr", 
+                               "background", 
+                               "plume"), 
+                 size=2,
+                 shape=1,
+                 stroke=2),
+             )+
+  scale_colour_viridis(discrete=T)+
+  scale_shape_identity()+
+  facet_grid(~flight, 
+             scales = "free_x", 
+             space='free')+
+  labs(x="Bottles", 
+       y="VOC content (ppb)")+
+  theme_minimal() +
+  theme(plot.title = element_blank(),  
+        text = element_text(size=14),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        legend.title = element_blank(),
+        panel.spacing.x = unit(0,"line"),
+        panel.border = element_rect(color = "grey", 
+                                    fill = NA, 
+                                    size = 1), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())+
+  guides(size="none")
+
+#
+
+# old plot still has the weirdly high bottle
+### background - methane co2
+voc_long %>% 
+  filter(ship == "background") %>% 
+  #filter(name == "methane") %>% 
+  filter(name == "carbon_dioxide") %>% 
+  ggplot()+
+  #geom_bar(aes(case_bottle, value-1800), position = "stack", stat = "identity", fill="darkgreen")+
+  geom_bar(aes(case_bottle, value-390), position = "stack", stat = "identity", fill="darkblue")+
+  scale_fill_viridis(discrete=TRUE) +
+  facet_grid(~flight, 
+             scales = "free_x", 
+             space='free', 
+             labeller = labeller(ship = label_wrap_gen(10)))+ 
+  #labs(x="SWAS case.bottle", y=bquote(''~CH[4]~(ppb)~-~1800~ppb*''))+
+  labs(x="SWAS case.bottle", y=bquote(''~CO[2]~(ppm)~-~390~ppm*''))+
+  theme_minimal() +
+  theme(plot.title = element_blank(),  
+        text = element_text(size=14),
+        axis.text.x = element_text(size=12),
+        legend.title = element_blank(),
+        panel.spacing.x = unit(0,"line"),
+        panel.border = element_rect(color = "grey", 
+                                    fill = NA, 
+                                    size = 1), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())+
+  guides(scales="none")
+
+
+
+#
+
+#background vs plume - avg
+
+voc_long$status <- "idk"
+voc_long$status[voc_long$ship == "background"] <- "out"
+voc_long$status[voc_long$case_bottle %in% c(1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 3.16, 4.7, 4.8, 4.5, 4.4, 4.3)] <- "out"
+voc_long$status[voc_long$case_bottle %in% 
+                c(106.3, 106.8, 106.5, #251
+                  101.1, 101.2, 6.6, 6.7, 6.8, 6.9, 6.4, #261
+                  2.1, 103.3, 103.4, 103.5, #255
+                  3.6, 3.7, 2.11, 3.12, 2,13, #256
+                  4.1, 4.9, #257
+                  101.3, 101.4, #262
+                  7.11, 7.10 #264
+                  )] <- "in"
+
+voc_long %>% 
+  filter(name != "methane") %>% 
+  filter(name != "carbon_dioxide") %>% 
+  filter(status != "idk") %>%
+  group_by(status, name) %>%                       # Also want to group by species
+  mutate(name = factor(name, levels=rev(colOrder))) %>%  # Best to order factors before plotting
+  summarise(avgvoc=mean(value, na.rm=T)) %>%
+  ggplot() +
+  geom_col(aes(x=status, y=avgvoc, fill=name)) +
+  scale_fill_manual(values=as.vector(cols25(18)),
+                    labels=c(rev(vocNames)))+
+  labs(x="Plume status", 
+       y="Average VOC content (ppb)")+
+  theme_minimal() +
+  theme(plot.title = element_blank(),  
+        text = element_text(size=14),
+        axis.text.x = element_text(size=12),
+        legend.title = element_blank())
+#
+
+
+### plume in out by species
+
+voc_long %>% 
+  filter(name != "methane") %>% 
+  filter(name != "carbon_dioxide") %>% 
+  filter(status != "idk") %>%
+  group_by(status, name) %>%    # Also want to group by species
+  mutate(name = factor(name, levels=colOrder)) %>%  # Best to order factors before plotting
+  summarise(avgvoc=mean(value, na.rm=T)) %>%
+  ggplot() +
+  geom_col(aes(x=status, y=avgvoc, fill=name)) +
+  scale_fill_manual(values=as.vector(colour25(19)),
+                    labels=c(voc_nam))+
+  labs(x="Plume status", 
+       y="Average VOC content (ppb)")+
+  theme_minimal() +
+  theme(plot.title = element_blank(),  
+        text = element_text(size=14),
+        axis.text.x = element_text(size=12),
+        legend.title = element_blank())+
+  facet_wrap(~name, 
+             scales = "free_y",
+             labeller = colNames,
+             nrow=5)+
+  guides(fill="none")
+
+
+###
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##################################################################################################################################################################################################################
 
 
 ###################################################################

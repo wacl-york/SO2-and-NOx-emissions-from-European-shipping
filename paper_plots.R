@@ -643,13 +643,13 @@ range(a$SFC)
 
 
 #### ACRUISE-1
-dm1 <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-1_integration/ACRUISE-1_integration_uncert.csv",
+dm <- read.csv("G:/My Drive/ACRUISE/Stuarts_integration/ACRUISE-1_integration/ACRUISE-1_integration_uncert.csv",
                stringsAsFactors = F,
                header=T)
 
 #dm <- dm %>% select(-c("X"))
 
-dm1$SFC <- dm1$SFC*100
+dm$SFC <- dm$SFC*100
 dm$Relative.unc <- dm$Relative.unc*100
 dm$Absolute.unc <- dm$Absolute.unc*100
 
@@ -765,7 +765,13 @@ ggplot()+
                  y=nox_ratio,
                  colour=Sea),
              size=4)+
-  #ylim(0,50)+
+  geom_errorbar(aes(x=Ship,
+                    y=nox_ratio,
+                    ymin=nox_ratio-nox_ratio*0.11,
+                    ymax=nox_ratio+nox_ratio*0.11),
+                width=0.1,
+                position = position_dodge(0.05),
+                alpha=0.7)+
   theme_bw()+
   theme(text = element_text(size=13),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
@@ -853,7 +859,7 @@ ship_comp %>%
                                    hjust=1))+
   #scale_y_continuous(breaks=seq(-3,5,0.5))+
   labs(x= "Ship name", 
-       y="Ratio")
+       y=bquote(''~NO[x]~to~CO[2]~ratio*''))
 
 
 #
@@ -865,42 +871,24 @@ sd(na.omit(ship_comp$SFC_avg))
 
 #
 
+a1 <- ship_comp
+
 ggplot()+
-  geom_vline(xintercept=0.5,
-             colour="black",
-             alpha=0.5,
-             size=2,
-             linetype="dotted")+
-  geom_vline(xintercept=3.5,
-             colour="black",
-             alpha=0.5,
-             size=2,
-             linetype="dashed")+
-  geom_line(aes(x=a1$SFC_avg,
+  geom_line(aes(x=a1$ratio_avg,
                 y=a1$diff),
             size=2,
             colour="#fde725",
             alpha=0.5)+
-  geom_point(aes(x=a1$SFC_avg,
+  geom_point(aes(x=a1$ratio_avg,
                  y=a1$diff),
              size=4,
              fill="#fde725",
              shape=21)+
-  geom_line(aes(x=a2$SFC_avg,
-                y=a2$diff),
-            size=2,
-            colour="#31688e",
-            alpha=0.5)+
-  geom_point(aes(x=a2$SFC_avg,
-                 y=a2$diff),
-             size=4,
-             fill="#31688e",
-             shape=21)+
   theme_bw()+
   theme(text = element_text(size=14))+
   scale_y_continuous(breaks=seq(-3,5,0.5))+
-  labs(x= "Observed SFC (%)", 
-       y="SFC difference (%)")
+  labs(x=bquote(''~NO[x]~to~CO[2]~observed~ratio*''), 
+       y="Ratio difference")
 
 #
 
@@ -1097,6 +1085,53 @@ dm$Absolute.unc <-  dm$Absolute.unc*100
 dm$zone <- "out"
 dm$zone[dm$Sea == "EC"] <- "in"
 
+dm$Where <- dm$Sea
+dm$Where[dm$Where == "PTO" | dm$Where == "BB" | dm$Where == "PTL"] <- "SL"
+
+
+dm$When <- as.factor(dm$When)
+
+dm$SFC <- round(dm$SFC, digits = 2)
+dm$SFC <-  as.numeric(dm$SFC)
+
+df <- dm[dm$Where =="EC" & dm$When=="2019",]
+
+df <- na.omit(df)
+mean(df$SFC)
+sd(df$SFC)
+
+dm %>% 
+  filter(Sea !="AO") %>%
+  group_by(Where) %>%
+  ggplot(aes(x=When,
+             y=SFC,
+             fill=When))+
+  stat_boxplot(geom = "errorbar",
+              width=0.5, size=2)+
+  geom_boxplot(notch=F,
+               alpha=0.5,
+               outlier.size = 4)+
+  facet_grid(~Where,
+             space = "free_x")+
+  theme_bw()+
+  scale_fill_viridis(discrete=T, 
+                     option="magma")+
+  theme(text = element_text(size=24))+
+  labs(y= "SFC (%)", x="Year")+
+  guides(fill="none")
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 dm %>%
   filter(Sea !="AO") %>%
@@ -1179,14 +1214,17 @@ labs(x= "Ship", y="SFC (%)", colour="SECA")
 
   
   ggplot()+
-    geom_histogram(data=dm2, 
+    geom_histogram(data=dm, 
                    aes(x=SFC,
                        y=..count../sum(..count..)),
-                   binwidth =)+
+                   binwidth =0.02,
+                   fill="blue",
+                   colour="blue",
+                   alpha=0.5)+
+    scale_x_continuous(breaks=seq(0,5,0.5))+
     theme_bw()+
     theme(text = element_text(size=14))+
-    viridis::scale_colour_viridis(option="viridis", discrete=T)+
-    labs(x= "SFC (%)", y="Counts")
+    labs(x= "SFC (%): ACRUISE-2", y="Counts (fraction of total)")
   
   
 
