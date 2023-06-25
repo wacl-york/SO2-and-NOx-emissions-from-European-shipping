@@ -981,10 +981,10 @@ def.pol.cart <- function(cart){
 }
 
 dm3 <-  dm %>%
-  mutate(wdir = def.pol.cart(matrix(c(V_C,U_C),ncol = 2)))
+  mutate(wdir = def.pol.cart(matrix(c(v,u),ncol = 2)))
 
 dm <- dm3 %>%
-  filter(HGT_RADR < 500) %>%
+  filter(hgt_radr < 500) %>%
   openair::timeAverage(avg.time = "min")
 #filter(flight == 263) %>%
 
@@ -1020,9 +1020,10 @@ dm %>%
 dm %>% 
   #filter(SO2_TECO < 10)%>%
   ggplot()+
-  geom_point(aes(x=LON_GIN,
+  geom_point(aes(x=lon,
                  y=so2,
-                 colour=wind_flag),
+                 colour=wind_flag,
+                 shape=flight),
              size=4,
              alpha=0.8)+
   theme_bw()+
