@@ -44,7 +44,7 @@ plumes = readRDS(here::here('data','faam_merge','acruise_merge.RDS')) |>
       time = data$date, 
       plumes = plumes_so2,
       dx = 1,
-      uncertainty = 0.348,
+      uncertainty = so2_uncert_perc,
       uncertainty_type = "absolute") |> 
       list(),
     area_co2 = acruiseR::integrate_aup_trapz(
@@ -53,7 +53,7 @@ plumes = readRDS(here::here('data','faam_merge','acruise_merge.RDS')) |>
       time = data$date, 
       plumes = plumes_co2,
       dx = 1,
-      uncertainty = 0.348,
+      uncertainty = co2_uncert_perc,
       uncertainty_type = "absolute") |> 
       list()
   )
