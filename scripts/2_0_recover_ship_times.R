@@ -99,6 +99,7 @@ ship_times = list(
   bind_rows(c251) |> 
   arrange(encounter_start) |> 
   mutate(encounter_start = as.nanotime(encounter_start),
-         encounter_end = as.nanotime(encounter_end))
+         encounter_end = as.nanotime(encounter_end),
+         campaign = ifelse(flight == "c292", "acsis", campaign))
 
 saveRDS(ship_times, here::here('data','ship_times.RDS'))
