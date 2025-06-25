@@ -4,4 +4,6 @@
 .Ruserdata
 
 # 
-data/
+data/faam*
+data/*.RDS
+data/*.csv
