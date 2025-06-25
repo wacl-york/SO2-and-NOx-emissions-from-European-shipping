@@ -47,16 +47,16 @@ handle_encounters = function(ships){
 
 c251 = tribble(
   ~ship_name,  ~encounter_number, ~encounter_start, ~encounter_end, ~type, ~construction_year, ~tonnage, ~scrubber, ~sea,
-  "Indi",             1, "2021/09/24 12:59:00", "2021/09/24 13:01:00", NA, NA, NA, NA, "BB",
-  "Xin Tian Jin",     1, "2021/09/24 13:11:00", "2021/09/24 13:19:00", NA, NA, NA, NA, "BB",
-  "Maersk Stratus",   1, "2021/09/24 13:19:00", "2021/09/24 13:21:00", NA, NA, NA, NA, "BB",
-  "Xin Tian Jin",     2, "2021/09/24 13:21:00", "2021/09/24 13:25:00", NA, NA, NA, NA, "BB",
+  "Indi",             1, "2021/09/24 12:59:00", "2021/09/24 13:01:00", "general cargp", 2009, 2545, TRUE, "BB",
+  "Xin Tian Jin",     1, "2021/09/24 13:11:00", "2021/09/24 13:19:00", "container ship", 2003, 66433, TRUE, "BB",
+  "Maersk Stratus",   1, "2021/09/24 13:19:00", "2021/09/24 13:21:00", "oil chemical tanker", 2017, 28137, FALSE, "BB",
+  "Xin Tian Jin",     2, "2021/09/24 13:21:00", "2021/09/24 13:25:00", "container ship", 2003, 66433, TRUE, "BB",
   "Unity Star",       1, "2021/09/24 13:27:00", "2021/09/24 13:29:00", NA, NA, NA, NA, "BB",
-  "Ardmore Defender", 1, "2021/09/24 13:39:00", "2021/09/24 13:44:00", NA, NA, NA, NA, "BB",
-  "MSC Lausane",      1, "2021/09/24 13:47:00", "2021/09/24 13:56:00", NA, NA, NA, NA, "BB",
+  "Ardmore Defender", 1, "2021/09/24 13:39:00", "2021/09/24 13:44:00", "oil chemical tanker", 2015, 23702, TRUE, "BB",
+  "MSC Lausane",      1, "2021/09/24 13:47:00", "2021/09/24 13:56:00", "container ship", 2005, 62702, FALSE, "BB",
   "CL Teresa",        1, "2021/09/24 13:56:00", "2021/09/24 13:59:00", NA, NA, NA, NA, "BB",
   "Bulker Bee 10",    1, "2021/09/24 14:04:00", "2021/09/24 14:06:00", NA, NA, NA, NA, "BB",
-  "Silver London",    1, "2021/09/24 14:06:00", "2021/09/24 14:08:00", NA, NA, NA, NA, "BB",
+  "Silver London",    1, "2021/09/24 14:06:00", "2021/09/24 14:08:00", "oil chemical tanker", 2014, 29553, TRUE, "BB",
 ) |> 
   mutate(flight = "c251",
          campaign = "acruise2",
