@@ -12,6 +12,8 @@ sfc_per_ship = readRDS(here::here('data','sfc_per_ship.RDS')) |>
 otherSFC = read_excel(here::here('data','all ships new jul 2025.xlsx'), "master") |> 
   clean_names() |> 
   mutate(
+    across(all_of(c("average_sfc_9","error_10","sfc_model","average_sfc_18","error_19","n_ox_co2","error_12", "n_ox_co2_model")), \(x) as.numeric(x)),
+    across(all_of(c("average_sfc_9","error_10","sfc_model","average_sfc_18","error_19")), \(x) x*100),
     campaign = case_when(
       campaign == "ACRUISE-1" ~ "acruise1",
       campaign == "ACRUISE-2" ~ "acruise2",
@@ -23,19 +25,16 @@ otherSFC = read_excel(here::here('data','all ships new jul 2025.xlsx'), "master"
 
 waspSFC = otherSFC |> 
   filter(campaign == "WASP") |> 
-  select(flight, campaign, name, type, year_built, tonnage, area, average_sfc = average_sfc_9, sfc_error = error_10) |> 
-  mutate(average_sfc = average_sfc*100,
-         sfc_error = sfc_error*100) # becuase these have been stored as excel percetages, readxl has read them in 100x too small
-
+  select(flight, campaign, name, type, year_built, tonnage, area, average_sfc = average_sfc_9, sfc_error = error_10, nox_co2 = n_ox_co2, nox_co2_error = error_12) 
 
 c251_model = tribble(
   ~flight, ~campaign, ~name, ~sfc_model, ~nox_co2_model,
-  "c251","acruise2","Ardmore Defender", 0.00416,  0.013038256,
-  "c251","acruise2","Indi",             0.00415,  0.020510597,
-  "c251","acruise2","MSC Lausanne",     0.00197,  0.0000549,
-  "c251","acruise2","Maersk Stratus",   0.00484,  0.02067,
-  "c251","acruise2","Silver London",    0.00129,  0.020676217,
-  "c251","acruise2","Xin Tian Jin",     0.001389, 0.020630546
+  "c251","acruise2","Ardmore Defender", 0.416,  0.013038256,
+  "c251","acruise2","Indi",             0.415,  0.020510597,
+  "c251","acruise2","MSC Lausanne",     0.197,  0.0000549,
+  "c251","acruise2","Maersk Stratus",   0.484,  0.02067,
+  "c251","acruise2","Silver London",    0.129,  0.020676217,
+  "c251","acruise2","Xin Tian Jin",     0.1389, 0.020630546
 )
 
 nox_model = otherSFC |> 
