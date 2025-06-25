@@ -53,7 +53,7 @@ c251 = tribble(
   "Xin Tian Jin",     2, "2021/09/24 13:21:00", "2021/09/24 13:25:00", "container ship", 2003, 66433, TRUE, "BB",
   "Unity Star",       1, "2021/09/24 13:27:00", "2021/09/24 13:29:00", NA, NA, NA, NA, "BB",
   "Ardmore Defender", 1, "2021/09/24 13:39:00", "2021/09/24 13:44:00", "oil chemical tanker", 2015, 23702, TRUE, "BB",
-  "MSC Lausane",      1, "2021/09/24 13:47:00", "2021/09/24 13:56:00", "container ship", 2005, 62702, FALSE, "BB",
+  "MSC Lausanne",     1, "2021/09/24 13:47:00", "2021/09/24 13:56:00", "container ship", 2005, 62702, FALSE, "BB",
   "CL Teresa",        1, "2021/09/24 13:56:00", "2021/09/24 13:59:00", NA, NA, NA, NA, "BB",
   "Bulker Bee 10",    1, "2021/09/24 14:04:00", "2021/09/24 14:06:00", NA, NA, NA, NA, "BB",
   "Silver London",    1, "2021/09/24 14:06:00", "2021/09/24 14:08:00", "oil chemical tanker", 2014, 29553, TRUE, "BB",
