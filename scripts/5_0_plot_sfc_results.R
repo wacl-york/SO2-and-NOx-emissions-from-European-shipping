@@ -569,7 +569,7 @@ df_model_compare %>%
     show.legend = F
   ) +
   geom_rect(
-    data = df_mean,
+    data = df_model_mean,
     inherit.aes = FALSE,
     aes(
       xmin = lower, 
@@ -635,7 +635,7 @@ ggsave(
 
 # save 
 ggsave(
-  here::here('plots','fig08_meas_vs_mod.png'), 
+  here::here('plots','fig08_meas_vs_mod.pdf'), 
   width = 8.5,
   height = 6
 )

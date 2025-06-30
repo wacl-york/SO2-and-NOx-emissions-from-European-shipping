@@ -1,0 +1,27 @@
+date,plume_id,plume_start,plume_end,vessel,imo,location_for_van,campaign,notes
+2023-05-14,1,2023-05-14T15:41:30Z,2023-05-14T15:46:00Z,PRINCESS SEAWAYS,8502391,Customs House,stfc_newcastle,"weak plume as wind from wring direction, no SO2 seen; speed of ship 6kts; van compass (GPSL mag heading) is around 90 degrees off (take 90 degrees from value to give true); use Daqfactor log to record van orientation (from 16:20 today); other large wide peaks are the tyne ferry"
+2023-05-14,2,2023-05-14T16:34:00Z,2023-05-14T16:39:00Z,VIKING CONSTANZA,9407689,Customs House,stfc_newcastle,Ship speed 6 kts; good plume with some SO2
+2023-05-15,3,2023-05-15T08:07:30Z,2023-05-15T08:10:00Z,KING SEAWAYS,8502406,MOST,stfc_newcastle,"Ship speed 8 kts, big peak - 5ppb SO2, 125ppb Nox"
+2023-05-15,4,2023-05-15T09:34:25Z,2023-05-15T09:38:20Z,NATO VESSEL 273,NA,MOST,stfc_newcastle,"Ship speed 6 kts, good peak, 4 ppb so2, 70 ppb Nox"
+2023-05-15,5,2023-05-15T09:50:30Z,2023-05-15T09:52:40Z,TUG SVITZER CECELIA,NA,MOST,stfc_newcastle,Speed 6 kts
+2023-05-15,6,2023-05-15T09:54:10Z,2023-05-15T09:55:30Z,TUG SVITZER TYNE,NA,MOST,stfc_newcastle,Speed 6 kts
+2023-05-15,7,2023-05-15T09:55:50Z,2023-05-15T09:57:40Z,TUG SVITZER SUN,NA,MOST,stfc_newcastle,Speed 6 kts
+2023-05-15,8,2023-05-15T10:18:00Z,2023-05-15T10:19:50Z,AURORA,9234989,MOST,stfc_newcastle,Speed 6 kts
+2023-05-15,9,2023-05-15T11:11:20Z,2023-05-15T11:16:20Z,IEVOLI IVORY,9703368,MOST,stfc_newcastle,and 2 tugs
+2023-05-15,10,2023-05-15T13:20:00Z,2023-05-15T13:23:00Z,SIR BOBBY ROBSON TUG,NA,MOST,stfc_newcastle,NA
+2023-05-15,11,2023-05-15T13:22:20Z,2023-05-15T13:24:00Z,TUG SVITZER CECELIA,NA,NA,stfc_newcastle,NA
+2023-05-16,12,2023-05-16T05:02:00Z,2023-05-16T05:07:00Z,AIDASOL,9490040,Customs House,stfc_newcastle,NA
+2023-05-16,13,2023-05-16T05:34:00Z,2023-05-16T07:15:00Z,AIDASOL,9490040,"Drive along commercial road to sample docked cruise ship (AIDASOL), back to hotel",stfc_newcastle,Sampling cruise ship when docked
+2023-05-16,14,2023-05-16T07:36:00Z,2023-05-16T07:51:00Z,TYNE FERRY,NA,The word,stfc_newcastle,Interference from Tyne Ferry
+2023-05-16,15,2023-05-16T08:25:00Z,2023-05-16T08:55:00Z,PRINCESS SEAWAYS,8502391,The word,stfc_newcastle,moved location to sample Princess Seaways when docked
+2023-05-16,16,2023-05-16T15:41:00Z,2023-05-16T15:45:00Z,PRINCESS SEAWAYS,8502391,Little Haven Car Park,stfc_newcastle,ship speed ~8 knots
+2023-05-16,17,2023-05-16T16:45:00Z,2023-05-16T16:52:00Z,AIDASOL,9490040,Little Haven Car Park,stfc_newcastle,NA
+2023-05-17,18,2023-05-17T12:30:00Z,2023-05-17T13:30:00Z,ATLAS WY101,NA,Western Quay Car Park,stfc_newcastle,SO2 enhancment from idling fishing boats - no sensors
+2023-05-17,19,2023-05-17T12:30:00Z,2023-05-17T13:30:00Z,MEDALIA,NA,Western Quay Car Park,stfc_newcastle,SO2 enhancment from idling fishing boats - no sensors
+2023-05-17,20,2023-05-17T15:53:00Z,2023-05-17T15:58:00Z,KING SEAWAYS,8502406,Tynemouth Shore,stfc_newcastle,NA
+2023-05-17,21,2023-05-17T18:04:00Z,2023-05-17T18:14:00Z,SEABOURN OVATION,9764958,Tynemouth Shore,stfc_newcastle,wide plume with possible interference from cars
+2023-05-18,22,2023-05-18T09:30:00Z,2023-05-18T09:40:00Z,BG IRELAND,9355446,Tynemouth Shore,stfc_newcastle,Took data but no plume - wind was wrong
+2023-05-18,23,2023-05-18T16:10:30Z,2023-05-18T16:13:20Z,PRINCESS SEAWAYS,8502391,Tynemouth Shore,stfc_newcastle,"very low ws, weak plume"
+2023-05-18,24,2023-05-18T16:26:00Z,2023-05-18T16:30:00Z,UKD MARLIN,9064176,Tynemouth Shore,stfc_newcastle,No plume seen
+2023-05-18,25,2023-05-18T17:54:30Z,2023-05-18T18:00:00Z,UKD MARLIN,9064176,Customs House,stfc_newcastle,"Manifold pump off at 17:10 to save battery, on again at 17:40. Large Nox plume from ship"
+2023-05-18,26,2023-05-18T18:21:30Z,2023-05-18T18:25:00Z,BULKNES,9384370,Customs House,stfc_newcastle,NA
