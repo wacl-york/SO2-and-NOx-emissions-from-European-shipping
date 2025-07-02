@@ -122,16 +122,16 @@ df_summary %>%
   ) +
   theme_shona_white_journal() +
   theme(
-    legend.position = c(0.9, 0.9),
-    #legend.background = element_rect(linewidth = 0.1)
+    legend.position = c(0.89, 0.88),
+    legend.background = element_rect(fill = "white", linewidth = 0.2)
   )
 
 
 # save 
 ggsave(
   here::here('plots','fig09_penlee_point_so2.png'), 
-  width = 6.5,
-  height = 5
+  width = 5.5,
+  height = 4
 )
 
 # save 
