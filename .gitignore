@@ -7,3 +7,6 @@
 data/faam*
 data/*.RDS
 data/*.csv
+
+.DS_Store
+
