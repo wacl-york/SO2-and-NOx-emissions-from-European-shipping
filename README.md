@@ -1,4 +1,5 @@
 # SO<sub>2</sub> and NO<sub>x</sub> emissions from European shipping: in situ measurements and comparison with an emission model
+[![DOI](https://zenodo.org/badge/996010493.svg)](https://zenodo.org/badge/latestdoi/996010493)
 
 Data processing code for the research paper "SO<sub>2</sub> and NO<sub>x</sub> emissions from European shipping: in situ measurements and comparison with an emission model"
 
