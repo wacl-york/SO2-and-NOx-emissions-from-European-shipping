@@ -34,7 +34,7 @@ st_bbox <- sp_create_envelope(bbox) %>%
 st_bbox %>% 
   leaflet_plot()
 
-# crop map
+# crop map to desired region
 st_map_crop <- st_map %>% 
   st_crop(st_bbox) %>% 
   filter(
@@ -44,6 +44,18 @@ st_map_crop <- st_map %>%
 # check
 st_map_crop %>% 
   leaflet_plot()
+
+# filter map to plot country names
+st_map_filt <- st_map_crop %>% 
+  filter(
+    name %in% c("United Kingdom", "Ireland", "Spain", "Portugal", "France", "Norway", "Germany")
+  ) %>% 
+  mutate(
+    name = case_when(
+      name == "United Kingdom" ~ "United \nKingdom",
+      T ~ name
+    )
+  )
 
 
 # LOCATIONS TO PLOT ----
@@ -98,7 +110,7 @@ sw_poly <- sw %>%
   sp_create_envelope() %>% 
   st_as_sf(crs = st_crs(4326)) %>% 
   mutate(
-    name = "Southwest Approaches (SW)"
+    name = "Southwest \nApproaches (SW)"
   )
 
 # PT
@@ -206,7 +218,7 @@ ggplot() +
     fill = "darkblue",
     alpha = 0.25,
     #colour = "darkblue",
-    pattern_spacing = 0.05,
+    pattern_spacing = 0.01,
     pattern_alpha = 0.25,
     pattern = "circle"
   ) +
@@ -221,9 +233,41 @@ ggplot() +
   geom_sf(
     data = st_map_crop %>% 
       st_buffer(dist = 1000),
-    fill = "gray60",
-    col = "white",
+    fill = "gray65",
+    col = "gray30",
     linewidth = 0.5
+  ) +
+  geom_sf_text(
+    data = st_map_filt %>% 
+      filter(!name %in% c("Portugal", "Spain", "United \nKingdom")),
+    aes(label = name), 
+    size = 4,
+    color = "black"
+  ) +
+  geom_sf_text(
+    data = st_map_filt %>% 
+      filter(name == "United \nKingdom"),
+    aes(label = name), 
+    nudge_y = -.9,
+    nudge_x = .5,
+    size = 4,
+    color = "black"
+  ) +
+  geom_sf_text(
+    data = st_map_filt %>% 
+      filter(name == "Spain"),
+    aes(label = name), 
+    nudge_y = 1.5,
+    size = 4,
+    color = "black"
+  ) +
+  geom_sf_text(
+    data = st_map_filt %>% 
+      filter(name == "Portugal"),
+    aes(label = name), 
+    angle = 90,
+    size = 4,
+    color = "black"
   ) +
   geom_sf(
     data = st_regions,
@@ -231,7 +275,7 @@ ggplot() +
       fill = name,
       col = name
     ),
-    alpha = 0.9,
+    alpha = 0.75,
     linewidth = 0.5
   ) +
   geom_sf(
@@ -249,11 +293,11 @@ ggplot() +
   ) +
   scale_fill_manual(
     values = pal[c(-1)],
-    name = "Measurement Region"
+    name = "Aerial Measurement Region"
   ) +
   scale_colour_manual(
     values = pal[c(-1)],
-    name = "Measurement Region"
+    name = "Aerial Measurement Region"
   ) +
   scale_pattern_manual(
     values = c( "circle")
@@ -268,13 +312,22 @@ ggplot() +
     location = "br",
     text_cex = 0.75,
   ) +
+  annotation_north_arrow(
+    location = "bl",
+    style = north_arrow_orienteering,
+    height = unit(0.8, "cm"),
+    width = unit(0.8, "cm"),
+    which_north = "true"
+  ) +
   theme_void() +
   theme(
     legend.text = element_text(size = 10),
     legend.title = element_text(size = 10),
-    legend.position = c(0.14, 0.88),
-    panel.background = element_rect(fill = "white", colour = "white"),
-    plot.background = element_rect(fill = "white", colour = "white")
+    legend.position = c(0.18, 0.91),
+    legend.background = element_rect(fill = "lightblue", color = NA),
+    panel.background = element_rect(fill = "lightblue", colour = "white"),
+    plot.background = element_rect(fill = "white", colour = "white"),
+    legend.key = element_rect(color = NA)
   ) +
   guides(
     fill = guide_legend(

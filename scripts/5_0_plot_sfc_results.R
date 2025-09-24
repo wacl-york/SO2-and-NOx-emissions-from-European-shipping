@@ -303,7 +303,9 @@ df_results_groups %>%
   ) %>% 
   ggplot() +
   geom_boxplot(
-    aes(value, age_bin, fill = group, col = group),
+    aes(value, age_bin),
+    col = pal_groups[2],
+    fill = pal_groups[2],
     show.legend = F,
     quantile_lines = T,
     quantiles = 2,
@@ -324,12 +326,12 @@ df_results_groups %>%
       NULL
     )
   ) +
-  scale_color_manual(
-    values = pal_groups,
-  ) +
-  scale_fill_manual(
-    values = pal_groups,
-  ) +
+  # scale_color_manual(
+  #   values = pal_groups[2],
+  # ) +
+  # scale_fill_manual(
+  #   values = pal_groups[2],
+  # ) +
   labs(
     x = "Value",
     y = "Vessel Age (Years)"
@@ -380,7 +382,9 @@ df_results_groups %>%
   ) %>%  
   ggplot() +
   geom_boxplot(
-    aes(value, tonnage_bin, fill = group, col = group),
+    aes(value, tonnage_bin),
+    col = pal_groups[2],
+    fill = pal_groups[2],
     show.legend = F,
     alpha = 0.6
   ) +
@@ -399,12 +403,12 @@ df_results_groups %>%
       NULL
     )
   ) +
-  scale_color_manual(
-    values = pal_groups
-  ) +
-  scale_fill_manual(
-    values = pal_groups
-  ) +
+  # scale_color_manual(
+  #   values = pal_groups
+  # ) +
+  # scale_fill_manual(
+  #   values = pal_groups
+  # ) +
   labs(
     x = "Value",
     y = "Vessel Gross Tonnage"
