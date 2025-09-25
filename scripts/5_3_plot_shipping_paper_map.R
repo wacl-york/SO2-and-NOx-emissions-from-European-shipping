@@ -38,7 +38,7 @@ st_bbox %>%
 st_map_crop <- st_map %>% 
   st_crop(st_bbox) %>% 
   filter(
-    !name %in% c("Algeria", " Faeroe Is", "Tunisia")
+    !name %in% c("Algeria", "Faeroe Is.", "Tunisia")
   )
 
 # check
@@ -199,7 +199,7 @@ pal <- c("#173F5F", "#20639B", "#3CAEA3", "#F6D55c", "#ED553B")
 ggplot() +
   geom_sf(
     data = st_seca_lines,
-    col = "darkblue",
+    col = "darkmagenta",
     linewidth = 1
   ) +
   # geom_sf(
@@ -215,9 +215,9 @@ ggplot() +
       pattern_alpha = 0.2,
       pattern_colour = "test"
     ),
-    fill = "darkblue",
+    fill = "darkmagenta",
     alpha = 0.25,
-    #colour = "darkblue",
+    colour = NA,
     pattern_spacing = 0.01,
     pattern_alpha = 0.25,
     pattern = "circle"
@@ -228,7 +228,7 @@ ggplot() +
       label = name
     ),
     size = 5,
-    col = "darkblue"
+    col = "darkmagenta"
   ) +
   geom_sf(
     data = st_map_crop %>% 
@@ -293,17 +293,17 @@ ggplot() +
   ) +
   scale_fill_manual(
     values = pal[c(-1)],
-    name = "Aerial Measurement Region"
+    name = "Airborne Measurement Region"
   ) +
   scale_colour_manual(
     values = pal[c(-1)],
-    name = "Aerial Measurement Region"
+    name = "Airborne Measurement Region"
   ) +
   scale_pattern_manual(
     values = c( "circle")
   ) +
   scale_pattern_fill_manual(
-    values = "darkblue"
+    values = "darkmagenta"
   ) +
   scale_pattern_colour_manual(
     values = NA
@@ -324,7 +324,7 @@ ggplot() +
     legend.text = element_text(size = 10),
     legend.title = element_text(size = 10),
     legend.position = c(0.18, 0.91),
-    legend.background = element_rect(fill = "lightblue", color = NA),
+    legend.background = element_rect(fill = NA, color = NA),
     panel.background = element_rect(fill = "lightblue", colour = "white"),
     plot.background = element_rect(fill = "white", colour = "white"),
     legend.key = element_rect(color = NA)
@@ -339,14 +339,14 @@ ggplot() +
 
 # save
 ggsave(
-  here::here('plots', "figure01_shipping_regions_map.png"),
+  here::here('plots', "fig01_shipping_regions_map.png"),
   width = 7,
   height = 9
 )
 
 # save
 ggsave(
-  here::here('plots', "figure01_shipping_regions_map.pdf"),
+  here::here('plots', "fig01_shipping_regions_map.pdf"),
   width = 7,
   height = 9
 )

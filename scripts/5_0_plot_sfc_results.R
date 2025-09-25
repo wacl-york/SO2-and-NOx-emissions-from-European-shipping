@@ -3,7 +3,8 @@ pacman::p_load(
   shonarrr,
   janitor,
   geomtextpath,
-  ggh4x
+  ggh4x,
+  broom
 )
 
 # LOAD ----
@@ -438,8 +439,8 @@ ggsave(
 
 ## scrubber comparison ----
 
-# build plot
-df_results_groups %>% 
+# filter data and reorder factors
+df_results_groups_scrubber <- df_results_groups %>% 
   filter(
     variable == "sfc",
     !is.na(scrubber)
@@ -453,7 +454,10 @@ df_results_groups %>%
       scrubber,
       levels = c("Yes", "No")
     )
-  ) %>% 
+  )
+
+# build plot
+df_results_groups_scrubber %>% 
   ggplot() +
   geom_boxplot(
     aes(group, value, fill = scrubber, col = scrubber),
@@ -498,7 +502,41 @@ ggsave(
   height = 4
 )
 
+
+# calculate average statistics 
+df_results_groups_scrubber %>% 
+  group_by(
+    group, scrubber
+  ) %>%
+  summarise(
+    mean = mean(value, na.rm = T),
+    median = median(value, na.rm = T)
+  )
+
+# perform ttest to check if distributions are statistically different 
+df_results_groups_scrubber %>% 
+  group_by(group) %>% 
+  summarise(
+    t_test = list(
+      t.test(value ~ scrubber)
+    ),
+    .groups = "drop"
+  ) %>% 
+  mutate(
+    results = map(t_test, tidy)
+  ) %>%
+  unnest(results) %>% 
+  mutate(
+    signif = if_else(p.value < 0.05, T, F)
+  ) %>% 
+  select(
+    group, estimate, estimate1, estimate2, parameter, statistic, p.value, signif
+  )
+
+
+
 ## model comparison ----
+
 
 # filter results for those with modelled values only
 df_model_compare <- df_results_groups %>% 
@@ -591,10 +629,10 @@ df_model_compare %>%
     labeller = as_labeller(var_labs, label_parsed)
   ) +
   scale_color_manual(
-    values = pal2[c(3, 5)]
+    values = pal2[c(2, 5)]
   ) +
   scale_fill_manual(
-    values = pal2[c(3, 5)]
+    values = pal2[c(2, 5)]
   ) +
   facetted_pos_scales(
     y = NULL, 

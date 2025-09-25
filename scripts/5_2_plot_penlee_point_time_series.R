@@ -115,7 +115,7 @@ df_summary %>%
   ) +
   labs(
     x = "Year",
-    y = expression(Annual~Mean~SO[2]~(ppb))
+    y = expression(Annual~Mean~SO[2]~(nmol/mol))
   ) +
   scale_x_continuous(
     breaks = seq(2015, 2022, 1)

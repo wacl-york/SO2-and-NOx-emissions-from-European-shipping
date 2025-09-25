@@ -152,7 +152,7 @@ a <- df_flights %>%
   labs(
     x = "Time",
     y = "Mixing Ratio",
-    title = "Aerial Measurements"
+    title = "Airborne Measurements"
   ) +
   #  coord_cartesian(expand = F) +
   theme_shona_white_journal() +
