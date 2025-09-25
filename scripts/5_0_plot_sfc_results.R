@@ -659,6 +659,7 @@ df_model_compare %>%
     legend.margin=margin(c(0,0,-10,0)),
     legend.title = element_blank(),
     panel.grid.major.y = element_blank(),
+    panel.grid.major.x = element_blank(),
     axis.title.x = element_blank(),
     axis.text.y = element_blank()
   ) +
