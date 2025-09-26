@@ -18,5 +18,5 @@ flight_download(flight = flightDetails$flight,
                 user = ceda_user,
                 pass = ceda_pass,
                 dirOut = dirOut,
-                files = c("flight-sum.txt", "core_1hz.nc", "faam-fgga.na")
+                files = c("flight-sum.txt", "core_1hz.nc", "faam-fgga.na","core-nitrates.nc")
                 )
