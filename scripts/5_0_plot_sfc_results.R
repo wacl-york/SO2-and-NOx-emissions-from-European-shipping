@@ -647,7 +647,7 @@ df_model_compare %>%
         labels = scales::label_comma(drop0trailing = TRUE, suffix = "%"),
       ),
       scale_x_continuous(
-        limits = c(0, 5),
+        limits = c(0, 3),
         labels = scales::label_comma(drop0trailing = TRUE, suffix = "%"),
       )
     )
@@ -676,6 +676,7 @@ ggsave(
   width = 7,
   height = 5
 )
+
 
 # save 
 ggsave(
