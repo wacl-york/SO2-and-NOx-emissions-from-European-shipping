@@ -4,7 +4,8 @@ pacman::p_load(
   janitor,
   geomtextpath,
   ggh4x,
-  broom
+  broom,
+  here
 )
 
 # LOAD ----
@@ -642,7 +643,7 @@ df_model_compare %>%
         labels = c(0, 0.01, 0.02, 0.03, 0.04)
       ),
       scale_x_continuous(
-        limits = c(0, 5),
+        limits = c(0, 10),
         labels = scales::label_comma(drop0trailing = TRUE, suffix = "%"),
       ),
       scale_x_continuous(
